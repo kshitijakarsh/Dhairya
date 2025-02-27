@@ -65,7 +65,7 @@ const Login = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-slate-950 focus:outline-none transition"
             />
           </div>
 
@@ -79,13 +79,13 @@ const Login = () => {
               onChange={handleChange}
               required
               minLength="8"
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-slate-950 focus:outline-none transition"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition"
+            className="w-full py-3 bg-slate-950 text-white font-semibold rounded-lg shadow-md hover:bg-slate-950 transition"
           >
             Login
           </button>

@@ -16,7 +16,8 @@ function Header() {
   };
 
   return (
-    <header className="relative py-2 md:py-4">
+    <>
+    <header className="relative border-b-2 drop-shadow-md py-2 md:py-4 ">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="relative flex items-center justify-between">
           <div className="flex-shrink-0">
@@ -53,7 +54,10 @@ function Header() {
           </div>
         </div>
       </div>
+      
     </header>
+
+    </>
   );
 }
 

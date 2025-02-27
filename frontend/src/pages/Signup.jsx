@@ -63,7 +63,7 @@ const Signup = () => {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-slate-950 focus:outline-none transition"
             />
           </div>
 
@@ -76,7 +76,7 @@ const Signup = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-slate-950 focus:outline-none transition"
             />
           </div>
 
@@ -90,7 +90,7 @@ const Signup = () => {
               onChange={handleChange}
               required
               minLength="8"
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-slate-950 focus:outline-none transition"
             />
           </div>
 
@@ -101,7 +101,7 @@ const Signup = () => {
                 key={role.id}
                 onClick={() => handleRoleClick(role.label)}
                 className={`bg-white shadow-lg rounded-xl p-6 flex flex-col items-center w-28 h-28 border-2 hover:shadow-xl transition transform duration-200 ease-in-out ${
-                  formData.role === role.label ? "border-blue-500 shadow-lg" : "border-gray-300"
+                  formData.role === role.label ? "border-slate-950 shadow-lg" : "border-gray-300"
                 }`}
               >
                 {role.icon}
@@ -111,22 +111,22 @@ const Signup = () => {
           </div>
 
           <div className="flex items-center justify-start text-gray-600 text-sm">
-            <input type="checkbox" id="terms" required className="mr-2 accent-blue-500" />
+            <input type="checkbox" id="terms" required className="mr-2 accent-slate-950" />
             <label htmlFor="terms">
-              I agree with <a href="#" className="text-blue-500 underline">Terms & Conditions</a>
+              I agree with <a href="#" className="text-slate-950 underline">Terms & Conditions</a>
             </label>
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition"
+            className="w-full py-3 bg-slate-950 text-white font-semibold rounded-lg shadow-md hover:bg-slate-950 transition"
           >
             Join
           </button>
         </form>
 
         <p className="mt-4 text-center text-gray-600 text-sm">
-          Already joined? <a href="#" className="text-blue-500 font-semibold">Login now</a>
+          Already joined? <a href="#" className="text-slate-950 font-semibold">Login now</a>
         </p>
       </div>
     </div>

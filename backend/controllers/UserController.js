@@ -16,11 +16,11 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ errors: result.error.format() });
     }
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role } = req.body;    
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    generateToken(newUser.userId);
+    
 
     const newUser = await Users.create({
       name,
@@ -29,7 +29,7 @@ export const createUser = async (req, res) => {
       role,
     });
 
-
+    generateToken(newUser.userId);
     
 
     res

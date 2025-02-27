@@ -7,11 +7,13 @@ dotenv.config();
 import userRouter from "./routes/userRouter.js";
 
 const app = express();
+app.use(cors());
+
 const PORT = process.env.PORT || 3000;
 
 const DB = process.env.MONGO_URL;
 app.use(express.json());
-app.use(cors());
+
 
 mongoose
   .connect(DB, {})

@@ -7,7 +7,7 @@ const nanoid = customAlphabet(
 );
 
 const UserSchema = new mongoose.Schema({
-  userId: { type: String, unique: true, default: () => nanoid },
+  userId: { type: String, unique: true, default: () => nanoid() },
   name: String,
   email: String,
   password: String,

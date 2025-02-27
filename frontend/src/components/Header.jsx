@@ -33,12 +33,6 @@ function Header() {
             </button>
           </div>
 
-          <div className="hidden lg:absolute lg:inset-y-0 lg:flex lg:items-center lg:justify-center lg:space-x-12 lg:-translate-x-1/2 lg:left-1/2">
-            <Link to="/experts" className="text-base font-medium text-gray-900 transition-all duration-200 hover:text-opacity-50">Experts</Link>
-            <Link to="/community" className="text-base font-medium text-gray-900 transition-all duration-200 hover:text-opacity-50">Community Groups</Link>
-            <Link to="/support" className="text-base font-medium text-gray-900 transition-all duration-200 hover:text-opacity-50">Support</Link>
-          </div>
-
           <div className="hidden lg:flex lg:items-center lg:justify-center lg:space-x-10">
             {isLoggedIn ? (
               <>

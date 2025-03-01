@@ -13,7 +13,7 @@ function Dash() {
                   Get personalised dashboards
                 </h1>
                 <p class="mt-2 text-lg text-gray-600 sm:mt-8 font-inter">
-                  monitor your growth and track your days with personalised dashboards
+                  monitor your growth and track your days with personalised dashboardsq
                 </p>
               </div>
             </div>

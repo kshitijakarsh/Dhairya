@@ -10,14 +10,14 @@ const userSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["Customer", "Trainer", "Owner"], { message: "Invalid role" })
+  role: z.enum(["User", "Trainer", "Owner"], { message: "Invalid role" })
 });
 
 const generateToken = (userId) => {
   if (!process.env.JWT_SECRET_KEY) {
-    throw new Error("JWT_SECRET is not defined");
+    throw new Error("JWT_SECRET_KEY is not defined");
   }
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign({ userId }, process.env.JWT_SECRET_KEY, { expiresIn: "7d" });
 };
 
 export const createUser = async (req, res) => {
@@ -37,7 +37,11 @@ export const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await Users.create({ name, email, password: hashedPassword, role });
 
-    const token = generateToken(newUser._id);
+    const token = jwt.sign(
+      { userId: newUser._id, role: newUser.role },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "7d" }
+    );
 
     res.status(201).json({ message: "User created successfully", user: newUser, token });
   } catch (error) {
@@ -81,3 +85,16 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// export const getCurrentUser = async (req, res) => {
+//   try {
+//     const user = await Users.findById(req.user.userId).select('-password');
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+//     res.json(user);
+//   } catch (error) {
+//     console.error('Error fetching user:', error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };

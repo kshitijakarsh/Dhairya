@@ -30,7 +30,7 @@ const Login = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/users/login", // ✅ Updated port to match backend
+        "http://localhost:3000/api/users/login",
         formData,
         { headers: { "Content-Type": "application/json" } } // ✅ Send JSON
       );

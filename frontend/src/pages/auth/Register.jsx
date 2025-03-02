@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaUser, FaEnvelope, FaLock, FaUserTie, FaDumbbell, FaArrowLeft } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { useAuth } from '../../contexts/AuthContext';
 
 const roles = [
   {
@@ -30,21 +31,26 @@ const roles = [
 
 const Register = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [step, setStep] = useState(1);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
     role: "",
+    acceptTerms: false,
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
 
-  const handleRoleSelect = (roleId) => {
-    setFormData((prev) => ({ ...prev, role: roleId }));
+  const handleRoleSelect = (role) => {
+    setFormData(prev => ({
+      ...prev,
+      role: role
+    }));
     setStep(2);
+    console.log("Selected role:", role); // Debug log
   };
 
   const handleChange = (e) => {
@@ -77,13 +83,8 @@ const Register = () => {
       newErrors.password = "Password must be at least 8 characters long";
     }
 
-    // Confirm password validation
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords don't match";
-    }
-
     // Terms validation
-    if (!termsAccepted) {
+    if (!formData.acceptTerms) {
       newErrors.terms = "You must accept the Terms and Conditions";
     }
 
@@ -93,62 +94,24 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-    
-    setIsLoading(true);
-    
-    try {
-      // Prepare the data for the API
-      const apiFormData = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-      };
+    setError("");
 
-      // Make the API call with proper error handling
-      const response = await axios.post(
-        "http://localhost:3000/api/users/register", 
-        apiFormData,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      if (response.data) {
-        // Store the token
-        if (response.data.token) {
-          localStorage.setItem('authToken', response.data.token);
-        }
-        
-        // Show success message
-        alert("Registration successful!");
-        
-        // Redirect to login page
-        navigate("/login");
+    try {
+      const response = await axios.post("http://localhost:3000/api/users/register", formData);
+      await login(response.data.token);
+
+      if (formData.role === "Owner") {
+        navigate("/gym-owner/register-gym");
+      } else {
+        const dashboardRoutes = {
+          'User': '/gym-goer',
+          'Trainer': '/trainer',
+          'Admin': '/admin'
+        };
+        navigate(dashboardRoutes[formData.role] || '/');
       }
     } catch (error) {
-      console.error("Registration error:", error);
-      
-      // Enhanced error handling
-      if (error.response) {
-        const errorMessage = error.response.data.error || error.response.data.errors || "Registration failed";
-        setErrors({ 
-          submit: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage) 
-        });
-      } else if (error.request) {
-        setErrors({ 
-          submit: "Unable to connect to the server. Please check your internet connection." 
-        });
-      } else {
-        setErrors({ 
-          submit: "An unexpected error occurred. Please try again." 
-        });
-      }
-    } finally {
-      setIsLoading(false);
+      setError(error.response?.data?.message || "Registration failed. Please try again.");
     }
   };
 
@@ -300,30 +263,6 @@ const Register = () => {
                       </div>
                     </div>
 
-                    {/* Confirm Password Field */}
-                    <div className="space-y-1.5">
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Confirm Password
-                      </label>
-                      <div className="relative">
-                        <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
-                        <input
-                          type="password"
-                          name="confirmPassword"
-                          value={formData.confirmPassword}
-                          onChange={handleChange}
-                          required
-                          className={`pl-12 pr-4 py-3.5 block w-full rounded-lg border ${
-                            errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                          } shadow-sm focus:ring-2 focus:ring-slate-950 focus:border-transparent text-base`}
-                          placeholder="Confirm your password"
-                        />
-                        {errors.confirmPassword && (
-                          <p className="mt-1.5 text-xs text-red-500">{errors.confirmPassword}</p>
-                        )}
-                      </div>
-                    </div>
-
                     {/* Terms and Conditions */}
                     <div className="pt-2">
                       <div className="flex items-start">
@@ -331,8 +270,8 @@ const Register = () => {
                           <input
                             type="checkbox"
                             id="terms"
-                            checked={termsAccepted}
-                            onChange={(e) => setTermsAccepted(e.target.checked)}
+                            checked={formData.acceptTerms}
+                            onChange={(e) => setFormData(prev => ({ ...prev, acceptTerms: e.target.checked }))}
                             className="h-4 w-4 text-slate-950 focus:ring-slate-950 border-gray-300 rounded"
                           />
                         </div>
@@ -352,9 +291,9 @@ const Register = () => {
                     </div>
 
                     {/* Error Message */}
-                    {errors.submit && (
+                    {error && (
                       <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm mt-4">
-                        {errors.submit}
+                        {error}
                       </div>
                     )}
 

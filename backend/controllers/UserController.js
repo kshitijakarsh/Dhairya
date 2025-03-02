@@ -10,7 +10,7 @@ const userSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["User", "Trainer", "Owner"], { message: "Invalid role" })
+  role: z.enum(["User", "Trainer", "Owner"], { message: "Invalid role" }),
 });
 
 const generateToken = (userId) => {
@@ -22,67 +22,121 @@ const generateToken = (userId) => {
 
 export const createUser = async (req, res) => {
   try {
-    const validationResult = userSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      return res.status(400).json({ errors: validationResult.error.format() });
+    // Validate request body
+    const validatedData = userSchema.parse(req.body);
+    const { name, email, password, role } = validatedData;
+
+    // Check if user exists
+    const userExists = await Users.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists"
+      });
     }
 
-    const { name, email, password, role } = req.body;
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    const existingUser = await Users.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: "Email already in use" });
-    }
+    // Create user
+    const user = await Users.create({
+      name,
+      email,
+      password: hashedPassword,
+      role
+    });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await Users.create({ name, email, password: hashedPassword, role });
-
+    // Generate token
     const token = jwt.sign(
-      { userId: newUser._id, role: newUser.role },
+      { id: user._id, role: user.role },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
+      { expiresIn: '30d' }
     );
 
-    res.status(201).json({ message: "User created successfully", user: newUser, token });
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
-    console.error("Error while creating user:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Error creating user",
+      error: error.message
+    });
   }
 };
 
+const loginSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(1, "Password is required")
+});
+
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    // Validate request body
+    const validatedData = loginSchema.parse(req.body);
+    const { email, password } = validatedData;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
-    }
-
+    // Find user
     const user = await Users.findOne({ email });
     if (!user) {
-      return res.status(404).json({ error: "User doesn't exist!" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password"
+      });
     }
 
-    const isPasswordMatched = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatched) {
-      return res.status(400).json({ error: "Invalid username or password" });
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password"
+      });
     }
 
-    if (!process.env.JWT_SECRET_KEY) {
-      console.error("🚨 JWT_SECRET is NOT defined. Check your .env file.");
-      return res.status(500).json({ error: "Internal Server Error: JWT_SECRET is missing" });
+    // Generate token
+    const token = generateToken(user._id);
+    
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors.map(e => e.message)
+      });
     }
 
-    const token = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
-    );
-
-    res.status(200).json({ msg: "Login successful", token });
-  } catch (err) {
-    console.error("🔥 Error during login:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error during login"
+    });
   }
 };
 

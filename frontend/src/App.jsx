@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
 import Search from './components/Search';
+import GymOwnerRoute from './components/GymOwnerRoute';
+import GymRegistration from './pages/dashboard/GymRegistration';
 
 function App() {
   const { user } = useAuth();
@@ -43,17 +45,21 @@ function App() {
         } />
 
         {/* Gym Owner Routes */}
-        <Route path="gym-owner/*" element={
-          <ProtectedRoute roles={['gym-owner']}>
-            <Routes>
-              <Route index element={<GymOwnerDashboard />} />
-              <Route path="gyms" element={<GymOwnerDashboard />} />
-              <Route path="trainers" element={<GymOwnerDashboard />} />
-              <Route path="members" element={<GymOwnerDashboard />} />
-              <Route path="*" element={<Navigate to="/gym-owner" replace />} />
-            </Routes>
-          </ProtectedRoute>
-        } />
+        <Route path="gym-owner">
+          <Route 
+            path="register-gym" 
+            element={
+              <GymOwnerRoute>
+                <GymRegistration />
+              </GymOwnerRoute>
+            } 
+          />
+          <Route path="dashboard" element={<GymOwnerDashboard />} />
+          <Route path="gyms" element={<GymOwnerDashboard />} />
+          <Route path="trainers" element={<GymOwnerDashboard />} />
+          <Route path="members" element={<GymOwnerDashboard />} />
+          <Route path="*" element={<Navigate to="/gym-owner" replace />} />
+        </Route>
 
         {/* Trainer Routes */}
         <Route path="trainer/*" element={

@@ -5,40 +5,32 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // Check for existing token on mount
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    if (token) {
-      // If we have a token, consider the user logged in
-      // You can decode the token to get basic user info if needed
-      setUser({ isAuthenticated: true });
+    const role = localStorage.getItem('userRole');
+    if (token && role) {
+      setUser({ isAuthenticated: true, role });
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
-    setLoading(false);
   }, []);
 
-  const login = async (token) => {
-    try {
-      localStorage.setItem('authToken', token);
-      // Set axios default header for future requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // Set user state to indicate logged in status
-      setUser({ isAuthenticated: true });
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    }
+  const login = async (token, role) => {
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('userRole', role);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    setUser({ isAuthenticated: true, role });
   };
 
   const logout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userRole');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

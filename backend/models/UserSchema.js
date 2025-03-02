@@ -8,9 +8,9 @@ const nanoid = customAlphabet(
 
 const UserSchema = new mongoose.Schema({
   userId: { type: String, unique: true, default: () => nanoid() },
-  name: String,
-  email: String,
-  password: String,
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { type: String, required: true },
   role: {
     type: String,
     enum: ["User", "Trainer", "Owner"],
@@ -18,15 +18,15 @@ const UserSchema = new mongoose.Schema({
   },
 
   ownerDetails: {
-    contact: String,
-    gyms: [],
+    contact: { type: String },
+    gyms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Gym" }],
     // ownerDashboard : { type: mongoose.Schema.Types.ObjectId, ref: "ownerDashboard" },
   },
 
   trainerDetails: {
-    contact: String,
-    charges: String,
-    programmes: {
+    contact: { type: String },
+    charges: { type: Number },
+    programmes: [{
       type: String,
       enum: [
         "Cardio",
@@ -49,14 +49,14 @@ const UserSchema = new mongoose.Schema({
         "Swimming",
         "Functional Training",
       ],
-    },
-    timeSlots: [],
+    }],
+    timeSlots: [{ type: String }], // Define more explicitly if needed
     approved: { type: Boolean, default: false },
     // trainerDashboard : { type: mongoose.Schema.Types.ObjectId, ref: "trainerDashboard" },
   },
 
   userDetails: {
-    programmes: {
+    programmes: [{
       type: String,
       enum: [
         "Cardio",
@@ -79,8 +79,8 @@ const UserSchema = new mongoose.Schema({
         "Swimming",
         "Functional Training",
       ],
-    },
-    budget: String,
+    }],
+    budget: { type: String },
     gymEnrolled: { type: Boolean, default: false },
     gymName: {
       type: String,
@@ -91,11 +91,11 @@ const UserSchema = new mongoose.Schema({
         message: "Gym name is required when gymEnrolled is true",
       },
     },
-    location: String,
-    // profilePicture : String,
+    location: { type: String },
+    // profilePicture : { type: String },
     // userDashboard : { type: mongoose.Schema.Types.ObjectId, ref: "userDashboard" },
   },
-});
+}, { timestamps: true });
 
 const Users = mongoose.model("Users", UserSchema);
 export default Users;

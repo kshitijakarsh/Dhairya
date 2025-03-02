@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaUser, FaDumbbell, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaDumbbell, FaSignOutAlt, FaPlus, FaTachometerAlt } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from "../assets/logo.png"
 
@@ -9,6 +9,7 @@ const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -55,6 +56,56 @@ const Header = () => {
     })
   };
 
+  // Function to render gym owner specific options
+  const renderGymOwnerOptions = () => (
+    <div className="relative">
+      <button
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        className="flex items-center text-gray-700 hover:text-slate-950 px-3 py-2 text-sm font-medium"
+      >
+        Gym Management
+        <svg
+          className={`ml-2 h-5 w-5 transform transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Dropdown Menu */}
+      <AnimatePresence>
+        {isDropdownOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
+          >
+            <Link
+              to="/gym-owner/register-gym"
+              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              onClick={() => setIsDropdownOpen(false)}
+            >
+              <FaPlus className="mr-2" />
+              Register New Gym
+            </Link>
+            <Link
+              to="/gym-owner/dashboard"
+              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              onClick={() => setIsDropdownOpen(false)}
+            >
+              <FaTachometerAlt className="mr-2" />
+              Dashboard
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
   return (
     <motion.header
       initial={{ y: -100 }}
@@ -90,28 +141,22 @@ const Header = () => {
             
             {user?.isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <motion.div
-                  variants={navItemVariants}
-                  whileHover="hover"
-                  whileTap="tap"
+                {/* Render gym owner options if user is a gym owner */}
+                {user.role === 'Owner' && renderGymOwnerOptions()}
+                
+                <Link
+                  to="/profile"
+                  className="text-gray-700 hover:text-slate-950 px-3 py-2 text-sm font-medium"
                 >
-                  <Link
-                    to="/profile"
-                    className="text-gray-700 hover:text-slate-950 px-3 py-2 text-sm font-medium"
-                  >
-                    Profile
-                  </Link>
-                </motion.div>
-                <motion.button
-                  variants={navItemVariants}
-                  whileHover="hover"
-                  whileTap="tap"
+                  Profile
+                </Link>
+                <button
                   onClick={handleLogout}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-slate-950 hover:bg-slate-800"
                 >
                   <FaSignOutAlt className="mr-2" />
                   Logout
-                </motion.button>
+                </button>
               </div>
             ) : (
               <div className="flex items-center space-x-4">
@@ -196,6 +241,35 @@ const Header = () => {
                   Locate
                 </Link>
               </motion.div>
+              
+              {user?.isAuthenticated && user.role === 'Owner' && (
+                <>
+                  <motion.div
+                    variants={mobileItemVariants}
+                    custom={1}
+                  >
+                    <Link
+                      to="/gym-owner/register-gym"
+                      className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Register New Gym
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    variants={mobileItemVariants}
+                    custom={2}
+                  >
+                    <Link
+                      to="/gym-owner/dashboard"
+                      className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                  </motion.div>
+                </>
+              )}
               
               {user?.isAuthenticated ? (
                 <>

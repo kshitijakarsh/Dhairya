@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { FaUser, FaDumbbell, FaSignOutAlt } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import Logo from "../assets/logo.png"
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -14,61 +16,149 @@ const Header = () => {
     setIsMenuOpen(false);
   };
 
+  // Animation variants
+  const navItemVariants = {
+    hover: { scale: 1.05, transition: { duration: 0.2 } },
+    tap: { scale: 0.95 }
+  };
+
+  const mobileMenuVariants = {
+    closed: {
+      opacity: 0,
+      height: 0,
+      transition: {
+        duration: 0.3,
+        ease: "easeInOut",
+        when: "afterChildren"
+      }
+    },
+    open: {
+      opacity: 1,
+      height: "auto",
+      transition: {
+        duration: 0.3,
+        ease: "easeInOut",
+        when: "beforeChildren"
+      }
+    }
+  };
+
+  const mobileItemVariants = {
+    closed: { x: -20, opacity: 0 },
+    open: i => ({
+      x: 0,
+      opacity: 1,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.3
+      }
+    })
+  };
+
   return (
-    <header className="bg-white shadow-sm">
+    <motion.header
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="bg-white shadow-sm"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex-shrink-0 flex items-center"
+          >
             <Link to="/" className="flex items-center space-x-2">
-              <FaDumbbell className="h-8 w-8 text-slate-950" />
-              <span className="text-xl font-bold text-slate-950">Dhairya</span>
+              <span className="text-xl text-slate-950">Dhairya</span>
             </Link>
-          </div>
+          </motion.div>
 
-          {/* Desktop Navigation */}
           <div className="hidden sm:flex sm:items-center sm:space-x-8">
+            <motion.div
+              variants={navItemVariants}
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Link
+                to="/search"
+                className="text-gray-700 hover:text-slate-950 px-3 py-2 text-sm font-medium"
+              >
+                Locate
+              </Link>
+            </motion.div>
+            
             {user?.isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <Link
-                  to="/profile"
-                  className="text-gray-700 hover:text-slate-950 px-3 py-2 text-sm font-medium"
+                <motion.div
+                  variants={navItemVariants}
+                  whileHover="hover"
+                  whileTap="tap"
                 >
-                  Profile
-                </Link>
-                <button
+                  <Link
+                    to="/profile"
+                    className="text-gray-700 hover:text-slate-950 px-3 py-2 text-sm font-medium"
+                  >
+                    Profile
+                  </Link>
+                </motion.div>
+                <motion.button
+                  variants={navItemVariants}
+                  whileHover="hover"
+                  whileTap="tap"
                   onClick={handleLogout}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-slate-950 hover:bg-slate-800"
                 >
                   <FaSignOutAlt className="mr-2" />
                   Logout
-                </button>
+                </motion.button>
               </div>
             ) : (
               <div className="flex items-center space-x-4">
-                <Link
-                  to="/login"
-                  className="text-gray-700 hover:text-slate-950 px-3 py-2 text-sm font-medium"
+                <motion.div
+                  variants={navItemVariants}
+                  whileHover="hover"
+                  whileTap="tap"
                 >
-                  Sign in
-                </Link>
-                <Link
-                  to="/register"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-slate-950 hover:bg-slate-800"
+                  <Link
+                    to="/login"
+                    className="text-gray-700 hover:text-slate-950 px-3 py-2 text-sm font-medium"
+                  >
+                    Sign in
+                  </Link>
+                </motion.div>
+                <motion.div
+                  variants={navItemVariants}
+                  whileHover="hover"
+                  whileTap="tap"
                 >
-                  Get started
-                </Link>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-slate-950 hover:bg-slate-800"
+                  >
+                    Get started
+                  </Link>
+                </motion.div>
               </div>
             )}
           </div>
 
           {/* Mobile menu button */}
-          <div className="sm:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-slate-950"
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-slate-950"
+          >
+            <span className="sr-only">Open main menu</span>
+            <motion.div
+              animate={isMenuOpen ? "open" : "closed"}
+              variants={{
+                open: { rotate: 180 },
+                closed: { rotate: 0 }
+              }}
+              transition={{ duration: 0.3 }}
             >
-              <span className="sr-only">Open main menu</span>
               {isMenuOpen ? (
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -78,53 +168,94 @@ const Header = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               )}
-            </button>
-          </div>
+            </motion.div>
+          </motion.button>
         </div>
       </div>
 
       {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="sm:hidden">
-          <div className="pt-2 pb-3 space-y-1">
-            {user?.isAuthenticated ? (
-              <>
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={mobileMenuVariants}
+            className="sm:hidden overflow-hidden"
+          >
+            <div className="pt-2 pb-3 space-y-1">
+              <motion.div
+                variants={mobileItemVariants}
+                custom={0}
+              >
                 <Link
-                  to="/profile"
+                  to="/search"
                   className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Profile
+                  Locate
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign in
-                </Link>
-                <Link
-                  to="/register"
-                  className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Get started
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </header>
+              </motion.div>
+              
+              {user?.isAuthenticated ? (
+                <>
+                  <motion.div
+                    variants={mobileItemVariants}
+                    custom={1}
+                  >
+                    <Link
+                      to="/profile"
+                      className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    variants={mobileItemVariants}
+                    custom={2}
+                  >
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
+                    >
+                      Logout
+                    </button>
+                  </motion.div>
+                </>
+              ) : (
+                <>
+                  <motion.div
+                    variants={mobileItemVariants}
+                    custom={1}
+                  >
+                    <Link
+                      to="/login"
+                      className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Sign in
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    variants={mobileItemVariants}
+                    custom={2}
+                  >
+                    <Link
+                      to="/register"
+                      className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-slate-950 hover:bg-gray-50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Get started
+                    </Link>
+                  </motion.div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.header>
   );
 };
 

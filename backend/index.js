@@ -1,32 +1,35 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import express from "express"
+import mongoose from "mongoose";
+import cors from "cors"
+import userRouter from "./routes/userRouter.js"
+import gymRouter from "./routes/gymRouter.js"
+import dotenv from "dotenv";
+
 dotenv.config();
 
-import userRouter from "./routes/userRouter.js";
-
 const app = express();
+
+// Middleware
 app.use(cors());
-
-const PORT = process.env.PORT || 3000;
-
-const DB = process.env.MONGO_URL;
 app.use(express.json());
 
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URL)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
-mongoose
-  .connect(DB, {})
-  .then(() => {
-    console.log("Db connected successfully");
-  })
-  .catch((err) => {
-    console.log(`Error while connecting to database: ${err}`);
-  });
+// Routes
+app.use('/api/users', userRouter);
+app.use('/api/gyms', gymRouter);
 
-app.use("/api/users", userRouter);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: err.message || 'Internal Server Error' });
+});
 
-
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

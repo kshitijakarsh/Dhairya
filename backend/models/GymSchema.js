@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const OperationHourSchema = new Schema({
@@ -54,4 +54,6 @@ const GymSchema = new Schema({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-module.exports = mongoose.model('Gym', GymSchema);
+const Gyms = mongoose.model("Gyms", GymSchema);
+export default Gyms;
+

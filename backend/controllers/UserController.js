@@ -1,4 +1,4 @@
-import Users from "../models/UserSchema.js";
+import User from "../models/UserSchema.js"
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -13,132 +13,73 @@ const userSchema = z.object({
   role: z.enum(["User", "Trainer", "Owner"], { message: "Invalid role" }),
 });
 
-const generateToken = (userId) => {
-  if (!process.env.JWT_SECRET_KEY) {
-    throw new Error("JWT_SECRET_KEY is not defined");
-  }
-  return jwt.sign({ userId }, process.env.JWT_SECRET_KEY, { expiresIn: "7d" });
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
+    expiresIn: '30d'
+  });
 };
 
-export const createUser = async (req, res) => {
+export const registerUser = async (req, res) => {
   try {
-    // Validate request body
-    const validatedData = userSchema.parse(req.body);
-    const { name, email, password, role } = validatedData;
+    const { name, email, password, role } = req.body;
 
-    // Check if user exists
-    const userExists = await Users.findOne({ email });
+    const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists"
-      });
+      return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create user
-    const user = await Users.create({
+    const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password,
       role
     });
 
-    // Generate token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET_KEY,
-      { expiresIn: '30d' }
-    );
+    const token = generateToken(user._id);
 
     res.status(201).json({
-      success: true,
-      token,
       user: {
-        id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role
-      }
+      },
+      token
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        errors: error.errors
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: "Error creating user",
-      error: error.message
-    });
+    res.status(400).json({ message: error.message });
   }
 };
-
-const loginSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(1, "Password is required")
-});
 
 export const loginUser = async (req, res) => {
   try {
-    // Validate request body
-    const validatedData = loginSchema.parse(req.body);
-    const { email, password } = validatedData;
+    const { email, password } = req.body;
 
-    // Find user
-    const user = await Users.findOne({ email });
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password"
-      });
+    const user = await User.findOne({ email });
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password"
-      });
-    }
-
-    // Generate token
     const token = generateToken(user._id);
-    
+
     res.json({
-      success: true,
-      token,
       user: {
-        id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role
-      }
+      },
+      token
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        errors: error.errors.map(e => e.message)
-      });
-    }
-
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: "Error during login"
-    });
+    res.status(400).json({ message: error.message });
   }
 };
+
+export default {
+  registerUser,
+  loginUser
+}
 
 // export const getCurrentUser = async (req, res) => {
 //   try {

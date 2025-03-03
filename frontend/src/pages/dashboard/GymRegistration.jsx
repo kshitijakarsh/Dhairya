@@ -61,16 +61,12 @@ const GymRegistration = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('authToken');
-      console.log('Sending request with token:', token); // Debug log
-
       const response = await axios.post(
         'http://localhost:3000/api/gyms/register',
         formData,
         {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
           }
         }
       );

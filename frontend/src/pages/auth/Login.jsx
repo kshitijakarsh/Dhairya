@@ -1,179 +1,160 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { FaEnvelope, FaLock, FaDumbbell } from "react-icons/fa";
-import { motion } from "framer-motion";
-import axios from "axios";
-import { useAuth } from "../../contexts/AuthContext";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: '',
+    password: ''
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const handleChange = (e) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
-    // Clear error when user starts typing
-    setError("");
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError('');
 
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/users/login",
-        formData
-      );
-
-      if (response.data.success) {
-        await login(response.data.token, response.data.user.role);
-
-        // Redirect based on role
-        if (response.data.user.role === "Owner") {
-          navigate("/gym-owner/dashboard");
-        } else {
-          const dashboardRoutes = {
-            'User': '/gym-goer',
-            'Trainer': '/trainer',
-            'Admin': '/admin'
-          };
-          navigate(dashboardRoutes[response.data.user.role] || '/');
-        }
-      }
+      await login(formData);
+      navigate('/dashboard');
     } catch (error) {
-      console.error('Login error:', error);
-      setError(
-        error.response?.data?.message || 
-        (Array.isArray(error.response?.data?.errors) 
-          ? error.response?.data?.errors.join(', ') 
-          : "Failed to login. Please try again.")
-      );
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white rounded-xl shadow-xl overflow-hidden"
-        >
-          {/* Header Section */}
-          <div className="relative h-48 bg-gradient-to-r from-slate-800 to-slate-900">
-            <div className="absolute inset-0 bg-black opacity-20"></div>
-            <div className="relative h-full flex flex-col items-center justify-center text-center px-4">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 150 }}
-              >
-                <FaDumbbell className="text-white text-5xl mb-4" />
-              </motion.div>
-              <h2 className="text-3xl font-bold text-white mb-2">Welcome Back!</h2>
-              <p className="text-slate-200 text-sm">Sign in to continue your fitness journey</p>
+        <div className="bg-white shadow-xl rounded-2xl p-8 space-y-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900 transform transition-all duration-300 hover:scale-105">
+              Welcome back
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              New to Dhairya?{' '}
+              <Link to="/register" className="font-medium text-black hover:text-gray-900 border-b-2 border-transparent hover:border-black transition-all duration-300">
+                Create an account
+              </Link>
+            </p>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 my-6 rounded-lg animate-shake" role="alert">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Form Section */}
-          <div className="p-8">
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-center"
-              >
-                <p className="text-sm text-red-600">{error}</p>
-              </motion.div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaEnvelope className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaLock className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="password"
-                      name="password"
-                      required
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-                      placeholder="Enter your password"
-                    />
-                  </div>
-                </div>
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  className="block w-full px-4 py-3 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all duration-200 text-sm"
+                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                {loading ? (
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="password"
+                    type={passwordVisible ? "text" : "password"}
+                    required
+                    className="block w-full px-4 py-3 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all duration-200 text-sm pr-10"
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setPasswordVisible(!passwordVisible)}
+                  >
+                    {passwordVisible ? (
+                      <svg className="h-5 w-5 text-gray-400 hover:text-black transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5 text-gray-400 hover:text-black transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Signing in...
+                    <input
+                      id="remember-me"
+                      name="remember-me"
+                      type="checkbox"
+                      className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                    />
+                    <label htmlFor="remember-me" className="ml-2 block text-xs text-gray-500">
+                      Keep me signed in
+                    </label>
                   </div>
-                ) : (
-                  "Sign in"
-                )}
-              </motion.button>
-
-              <div className="mt-6 text-center">
-                <Link 
-                  to="/register"
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors duration-200"
-                >
-                  Don't have an account? Sign up
-                </Link>
+                  <Link to="/forgot-password" className="text-xs font-medium text-black hover:text-gray-900 border-b border-transparent hover:border-black transition-all duration-300">
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
-            </form>
-          </div>
-        </motion.div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:bg-gray-800"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

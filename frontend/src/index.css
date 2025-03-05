@@ -1,11 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
-body {
-  font-family: 'Poppins', sans-serif;
-}
-
-
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@layer base {
+  html {
+    font-family: 'Poppins', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    @apply text-black font-bold;
+  }
+  
+  .gradient-bg {
+    @apply bg-black;
+  }
+  
+  .gradient-bg-hover {
+    @apply hover:bg-gray-900;
+  }
+
+  .monochrome-card {
+    @apply bg-white border border-gray-200 shadow-md hover:shadow-xl transition-shadow duration-300;
+  }
+
+  .monochrome-button {
+    @apply px-6 py-3 bg-black text-white hover:bg-gray-900 transition-colors duration-300 rounded-lg;
+  }
+
+  .monochrome-button-outline {
+    @apply px-6 py-3 border-2 border-black text-black hover:bg-gray-50 transition-colors duration-300 rounded-lg;
+  }
+}

@@ -1,51 +1,73 @@
 import React from "react";
-import hero from "../assets/hero.svg"
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import hero from "../assets/hero.svg";
 
 function Hero() {
+  const { user } = useAuth();
+
   return (
-    <>
-      <section class="relative py-10 sm:py-10 lg:pb-20 lg:h-auto">
-        <div class="absolute bottom-0 right-0 overflow-hidden">
-          <img
-            class="w-full h-auto origin-right transform scale-50 lg:w-auto lg:h-120 lg:mx-auto lg:object-cover lg:scale-100"
-            src="https://cdn.rareblocks.xyz/collection/clarity/images/hero/1/background-pattern.png"
-            alt=""
-          />
-        </div>
+    <section className="relative py-20 overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.gray.100),white)]" />
+      
+      <div className="container relative">
+        <div className="grid grid-cols-1 gap-y-12 lg:grid-cols-2 lg:gap-x-16 lg:items-center">
+          <div className="text-center lg:text-left space-y-8 max-w-lg mx-auto lg:mx-0">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+              A place to grow{" "}
+              <span className="gradient-text">stronger and fitter</span>
+            </h1>
+            
+            <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
+              Train hard, stay consistent, and push beyond limits. Strength
+              grows with discipline, and fitness fuels confidence, energy, and
+              resilience.
+            </p>
 
-        <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-          <div class="grid grid-cols-1 gap-y-4 lg:items-center lg:grid-cols-2 xl:grid-cols-2">
-            <div class="text-center xl:col-span-1 lg:text-left md:px-16 lg:px-0 xl:pr-20">
-              <h1 class="text-4xl font-bold leading-tight text-gray-900 sm:text-5xl sm:leading-tight lg:text-6xl lg:leading-tight font-pj">
-                A place to grow stronger and fitter.
-              </h1>
-              <p class="mt-2 text-lg text-gray-600 sm:mt-6 font-inter">
-                Train hard, stay consistent, and push beyond limits. Strength
-                grows with discipline, and fitness fuels confidence, energy, and
-                resilience.
-              </p>
-
-              <a
-                href="#"
-                title=""
-                class="inline-flex px-8 py-4 mt-8 text-lg text-white transition-all duration-200 bg-slate-950 border border-transparent rounded-lg hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600"
-                role="button"
-              >
-                Let's Go
-              </a>
-            </div>
-
-            <div class="xl:col-span-1">
-              <img
-                class="w-full mx-auto"
-                src={hero}
-                alt=""
-              />
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+              {!user ? (
+                <>
+                  <Link
+                    to="/register"
+                    className="w-full sm:w-auto monochrome-button"
+                  >
+                    Get Started
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="w-full sm:w-auto monochrome-button-outline"
+                  >
+                    Sign In
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  to="/register-gym"
+                  className="w-full sm:w-auto monochrome-button"
+                >
+                  Register Your Gym
+                </Link>
+              )}
             </div>
           </div>
+
+          <div className="relative lg:ml-4">
+            <div className="relative z-10 bg-white rounded-xl border border-gray-200 shadow-lg p-2">
+              <img
+                src={hero}
+                alt="Fitness Illustration"
+                className="w-full h-auto transform transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            
+            {/* Decorative Elements */}
+            <div className="absolute -top-12 -right-12 w-40 h-40 bg-gray-200/50 rounded-full blur-3xl" />
+            <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-gray-200/50 rounded-full blur-3xl" />
+          </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
 

@@ -17,21 +17,21 @@ const GymRegistration = () => {
       city: '',
       state: '',
       zip: '',
-      country: 'India' // Default to India
+      country: 'India'
     },
     phone: '',
     facilities: [],
     operation_hours: [
       {
-        day: 'All Days', // Default to all days
+        day: 'All Days',
         open: '',
         close: ''
       }
     ],
     membership_charges: {
-      monthly: 0,
-      yearly: 0,
-      family: 0
+      monthly: '',
+      yearly: '',
+      family: ''
     }
   });
 
@@ -51,17 +51,40 @@ const GymRegistration = () => {
     'Cafe'
   ];
 
+  // Helper function to format time to HH:mm
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+    const [hours, minutes] = timeString.split(':');
+    return `${hours.padStart(2, '0')}:${minutes || '00'}`;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
     if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
+      const [parent, child, subChild] = name.split('.');
+      
+      if (parent === 'operation_hours') {
+        // Handle operation hours time fields
+        const index = parseInt(child);
+        const field = subChild;
+        
+        setFormData(prev => ({
+          ...prev,
+          operation_hours: prev.operation_hours.map((hours, idx) => 
+            idx === index ? { ...hours, [field]: formatTime(value) } : hours
+          )
+        }));
+      } else {
+        // Handle other nested fields
+        setFormData(prev => ({
+          ...prev,
+          [parent]: {
+            ...prev[parent],
+            [child]: value
+          }
+        }));
+      }
     } else {
       setFormData(prev => ({
         ...prev,
@@ -90,9 +113,18 @@ const GymRegistration = () => {
         throw new Error('Authentication token not found');
       }
 
-      // Ensure we have the user ID
       if (!user || !user._id) {
         throw new Error('User information not found');
+      }
+
+      // Validate time format
+      const openTime = formData.operation_hours[0].open;
+      const closeTime = formData.operation_hours[0].close;
+      
+      if (!openTime || !closeTime) {
+        setError('Operating hours are required');
+        setLoading(false);
+        return;
       }
 
       // Format the data according to the backend schema
@@ -110,16 +142,17 @@ const GymRegistration = () => {
         operation_hours: [
           {
             day: 'All Days',
-            open: formData.operation_hours[0].open,
-            close: formData.operation_hours[0].close
+            open: formatTime(openTime),
+            close: formatTime(closeTime)
           }
         ],
         facilities: formData.facilities,
         membership_charges: {
-          monthly: parseFloat(formData.membership_charges.monthly),
-          yearly: parseFloat(formData.membership_charges.monthly) * 11, // 1 month free
-          family: parseFloat(formData.membership_charges.monthly) * 2.5 // Family package
-        }
+          monthly: parseFloat(formData.membership_charges.monthly) || 0,
+          yearly: parseFloat(formData.membership_charges.monthly) * 11,
+          family: parseFloat(formData.membership_charges.monthly) * 2.5
+        },
+        description: formData.description.trim()
       };
 
       // Debug log
@@ -140,22 +173,23 @@ const GymRegistration = () => {
       navigate('/');
     } catch (error) {
       console.error('Registration error:', error);
+      
       if (error.response) {
-        // Log the full error response for debugging
         console.error('Full error response:', error.response);
         console.error('Error data:', error.response.data);
         
-        // Handle array of validation errors
-        if (Array.isArray(error.response.data.message)) {
-          const errorMessages = error.response.data.message
-            .map(err => {
-              console.log('Validation error:', err); // Debug log
-              return err.message || JSON.stringify(err);
-            })
-            .filter(Boolean)
-            .join('. ');
-          setError(errorMessages || 'Validation failed');
-        } else if (typeof error.response.data === 'object' && error.response.data.message) {
+        if (error.response.data.type === 'ValidationError') {
+          const errors = error.response.data.message;
+          if (Array.isArray(errors)) {
+            const errorMessages = errors.map(err => {
+              console.log('Validation error:', err);
+              return `${err.path}: ${err.message}`;
+            }).join('\n');
+            setError(errorMessages);
+          } else {
+            setError(error.response.data.message);
+          }
+        } else if (error.response.data.message) {
           setError(error.response.data.message);
         } else {
           setError('Failed to register gym. Please check your input and try again.');
@@ -165,7 +199,7 @@ const GymRegistration = () => {
         setError('No response from server. Please try again.');
       } else {
         console.error('Error message:', error.message);
-        setError(String(error.message) || 'Failed to register gym');
+        setError(error.message || 'Failed to register gym');
       }
     } finally {
       setLoading(false);
@@ -203,9 +237,11 @@ const GymRegistration = () => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-center"
+                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
               >
-                <p className="text-sm text-red-600">{error}</p>
+                {error.split('\n').map((err, index) => (
+                  <p key={index} className="text-sm text-red-600">{err}</p>
+                ))}
               </motion.div>
             )}
 

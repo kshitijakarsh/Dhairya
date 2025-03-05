@@ -6,6 +6,7 @@ import Register from "./pages/auth/Register";
 import GymRegistration from "./pages/dashboard/GymRegistration";
 import { useAuth } from "./contexts/AuthContext";
 import Home from './pages/Home';
+import Search from './components/common/Search';
 
 function App() {
   const { user, loading } = useAuth();
@@ -26,6 +27,7 @@ function App() {
             path="register" 
             element={!user ? <Register /> : <Navigate to="/" replace />} 
           />
+          <Route path="/search" element={<Search />} />
           
           {/* Protected Routes */}
           <Route 

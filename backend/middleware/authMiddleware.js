@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken"
 import Users from "../models/UserSchema.js";
 
 // Protect routes - Authentication check
-export const protect = async (req, res, next) => {
+const protect = async (req, res, next) => {
   try {
     let token;
     
@@ -14,20 +14,26 @@ export const protect = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authorized, no token' });
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    
-    // Get user from token
-    const user = await User.findById(decoded.id).select('-password');
-    
-    if (!user) {
-      return res.status(401).json({ message: 'User not found' });
-    }
+    try {
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+      
+      // Get user from token
+      const user = await Users.findById(decoded.id).select('-password');
+      
+      if (!user) {
+        return res.status(401).json({ message: 'User not found' });
+      }
 
-    req.user = user;
-    next();
+      req.user = user;
+      next();
+    } catch (error) {
+      console.error('Token verification error:', error);
+      return res.status(401).json({ message: 'Not authorized, token failed' });
+    }
   } catch (error) {
-    res.status(401).json({ message: 'Not authorized, token failed' });
+    console.error('Auth middleware error:', error);
+    res.status(401).json({ message: 'Not authorized' });
   }
 };
 
@@ -43,7 +49,4 @@ const authorize = (...roles) => {
   };
 };
 
-export default {
-  protect,
-  authorize
-}
+export { protect, authorize };

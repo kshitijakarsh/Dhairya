@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { FaDumbbell } from 'react-icons/fa';
+import { API_BASE_URL, ENDPOINTS, STORAGE_KEYS } from '../../constants';
 
 const GymRegistration = () => {
   const navigate = useNavigate();
@@ -11,15 +12,27 @@ const GymRegistration = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
-    contactNumber: '',
+    address: {
+      street: '',
+      city: '',
+      state: '',
+      zip: '',
+      country: 'India' // Default to India
+    },
+    phone: '',
     facilities: [],
-    openingHours: '',
-    closingHours: '',
-    monthlyFee: '',
+    operation_hours: [
+      {
+        day: 'All Days', // Default to all days
+        open: '',
+        close: ''
+      }
+    ],
+    membership_charges: {
+      monthly: 0,
+      yearly: 0,
+      family: 0
+    }
   });
 
   const [error, setError] = useState('');
@@ -40,10 +53,21 @@ const GymRegistration = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleFacilityChange = (facility) => {
@@ -61,22 +85,88 @@ const GymRegistration = () => {
     setError('');
 
     try {
+      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      // Ensure we have the user ID
+      if (!user || !user._id) {
+        throw new Error('User information not found');
+      }
+
+      // Format the data according to the backend schema
+      const formattedData = {
+        name: formData.name.trim(),
+        owner: user._id,
+        address: {
+          street: formData.address.street.trim(),
+          city: formData.address.city.trim(),
+          state: formData.address.state.trim(),
+          zip: formData.address.zip.trim(),
+          country: formData.address.country.trim()
+        },
+        phone: formData.phone.trim(),
+        operation_hours: [
+          {
+            day: 'All Days',
+            open: formData.operation_hours[0].open,
+            close: formData.operation_hours[0].close
+          }
+        ],
+        facilities: formData.facilities,
+        membership_charges: {
+          monthly: parseFloat(formData.membership_charges.monthly),
+          yearly: parseFloat(formData.membership_charges.monthly) * 11, // 1 month free
+          family: parseFloat(formData.membership_charges.monthly) * 2.5 // Family package
+        }
+      };
+
+      // Debug log
+      console.log('Sending data:', formattedData);
+
       const response = await axios.post(
-        'http://localhost:3000/api/gyms/register',
-        formData,
+        `${API_BASE_URL}${ENDPOINTS.REGISTER_GYM}`,
+        formattedData,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         }
       );
 
-      console.log('Registration successful:', response.data);
-      navigate('/dashboard');
+      console.log('Gym registration successful:', response.data);
+      navigate('/');
     } catch (error) {
       console.error('Registration error:', error);
-      console.error('Error response:', error.response);
-      setError(error.response?.data?.message || 'Failed to register gym');
+      if (error.response) {
+        // Log the full error response for debugging
+        console.error('Full error response:', error.response);
+        console.error('Error data:', error.response.data);
+        
+        // Handle array of validation errors
+        if (Array.isArray(error.response.data.message)) {
+          const errorMessages = error.response.data.message
+            .map(err => {
+              console.log('Validation error:', err); // Debug log
+              return err.message || JSON.stringify(err);
+            })
+            .filter(Boolean)
+            .join('. ');
+          setError(errorMessages || 'Validation failed');
+        } else if (typeof error.response.data === 'object' && error.response.data.message) {
+          setError(error.response.data.message);
+        } else {
+          setError('Failed to register gym. Please check your input and try again.');
+        }
+      } else if (error.request) {
+        console.error('Error request:', error.request);
+        setError('No response from server. Please try again.');
+      } else {
+        console.error('Error message:', error.message);
+        setError(String(error.message) || 'Failed to register gym');
+      }
     } finally {
       setLoading(false);
     }
@@ -144,9 +234,9 @@ const GymRegistration = () => {
                       </label>
                       <input
                         type="tel"
-                        name="contactNumber"
+                        name="phone"
                         required
-                        value={formData.contactNumber}
+                        value={formData.phone}
                         onChange={handleChange}
                         className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
                       />
@@ -179,9 +269,9 @@ const GymRegistration = () => {
                       </label>
                       <input
                         type="text"
-                        name="address"
+                        name="address.street"
                         required
-                        value={formData.address}
+                        value={formData.address.street}
                         onChange={handleChange}
                         className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
                       />
@@ -192,9 +282,9 @@ const GymRegistration = () => {
                       </label>
                       <input
                         type="text"
-                        name="city"
+                        name="address.city"
                         required
-                        value={formData.city}
+                        value={formData.address.city}
                         onChange={handleChange}
                         className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
                       />
@@ -205,9 +295,9 @@ const GymRegistration = () => {
                       </label>
                       <input
                         type="text"
-                        name="state"
+                        name="address.state"
                         required
-                        value={formData.state}
+                        value={formData.address.state}
                         onChange={handleChange}
                         className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
                       />
@@ -218,9 +308,9 @@ const GymRegistration = () => {
                       </label>
                       <input
                         type="text"
-                        name="pincode"
+                        name="address.zip"
                         required
-                        value={formData.pincode}
+                        value={formData.address.zip}
                         onChange={handleChange}
                         className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
                       />
@@ -238,9 +328,9 @@ const GymRegistration = () => {
                       </label>
                       <input
                         type="time"
-                        name="openingHours"
+                        name="operation_hours.0.open"
                         required
-                        value={formData.openingHours}
+                        value={formData.operation_hours[0].open}
                         onChange={handleChange}
                         className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
                       />
@@ -251,9 +341,9 @@ const GymRegistration = () => {
                       </label>
                       <input
                         type="time"
-                        name="closingHours"
+                        name="operation_hours.0.close"
                         required
-                        value={formData.closingHours}
+                        value={formData.operation_hours[0].close}
                         onChange={handleChange}
                         className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
                       />
@@ -264,9 +354,9 @@ const GymRegistration = () => {
                       </label>
                       <input
                         type="number"
-                        name="monthlyFee"
+                        name="membership_charges.monthly"
                         required
-                        value={formData.monthlyFee}
+                        value={formData.membership_charges.monthly}
                         onChange={handleChange}
                         className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
                       />

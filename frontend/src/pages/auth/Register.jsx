@@ -69,7 +69,7 @@ const Register = () => {
 
     try {
       await register(formData);
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       setError(error.message);
     } finally {

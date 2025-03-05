@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const features = [
   {
@@ -36,7 +36,7 @@ function MidSec() {
   const { user } = useAuth();
 
   return (
-    <section className="py-24 bg-gradient-to-b from-white to-gray-50">
+    <section className="py-16 md:py-24 bg-gradient-to-b from-white to-gray-50">
       <div className="container">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-4xl font-bold mb-6">

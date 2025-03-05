@@ -1,13 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import hero from "../assets/hero.svg";
+import { useAuth } from "../../contexts/AuthContext";
+import hero from "../../assets/hero.svg";
 
 function Hero() {
   const { user } = useAuth();
 
   return (
-    <section className="relative py-20 overflow-hidden">
+    <section className="relative py-12 md:py-20 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.gray.100),white)]" />
       
@@ -53,13 +53,11 @@ function Hero() {
           </div>
 
           <div className="relative lg:ml-4">
-            <div className="relative z-10 bg-white rounded-xl border border-gray-200 shadow-lg p-2">
-              <img
-                src={hero}
-                alt="Fitness Illustration"
-                className="w-full h-auto transform transition-transform duration-500 hover:scale-105"
-              />
-            </div>
+            <img
+              src={hero}
+              alt="Fitness Illustration"
+              className="w-full h-auto transform transition-transform duration-500 hover:scale-105"
+            />
             
             {/* Decorative Elements */}
             <div className="absolute -top-12 -right-12 w-40 h-40 bg-gray-200/50 rounded-full blur-3xl" />

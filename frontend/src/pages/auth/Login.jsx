@@ -27,8 +27,8 @@ const Login = () => {
     setError('');
 
     try {
-      await login(formData);
-      navigate('/dashboard');
+      await login(formData.email, formData.password);
+      navigate('/');
     } catch (error) {
       setError(error.message);
     } finally {

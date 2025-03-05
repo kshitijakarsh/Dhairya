@@ -47,3 +47,36 @@
     @apply px-6 py-3 border-2 border-black text-black hover:bg-gray-50 transition-colors duration-300 rounded-lg;
   }
 }
+
+@keyframes float {
+  0% {
+    transform: translateY(0px) translateX(0px);
+  }
+  50% {
+    transform: translateY(-6px) translateX(3px);
+  }
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+}
+
+@keyframes float-delayed {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 7s ease-in-out infinite;
+  animation-delay: 1s;
+}

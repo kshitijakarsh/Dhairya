@@ -7,6 +7,7 @@ import GymRegistration from "./pages/dashboard/GymRegistration";
 import { useAuth } from "./contexts/AuthContext";
 import Home from './pages/Home';
 import Search from './components/common/Search';
+import GymDetails from './pages/GymDetails';
 
 function App() {
   const { user, loading } = useAuth();
@@ -38,6 +39,7 @@ function App() {
           {/* Redirect all other routes to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+        <Route path="/gym/:id" element={<GymDetails />} />
       </Routes>
     </div>
   );

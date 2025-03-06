@@ -196,8 +196,6 @@ export const addRating = async (req, res) => {
 export const searchGyms = async (req, res) => {
   try {
     const { query } = req.query;
-    
-    // If no query, return all gyms (limited to 20)
     if (!query || query.trim() === '') {
       const allGyms = await Gyms.find({})
         .select('name address facilities membership_charges')

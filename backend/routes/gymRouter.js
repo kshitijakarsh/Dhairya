@@ -8,6 +8,7 @@ console.log('Registering gym routes...');
 // Routes
 const router = express.Router();
 router.get('/search', searchGyms); // Public route for searching gyms
+router.get('/view/:id', getGymById); // Public route for viewing gym details
 router.post('/register', protect, registerGym);
 router.get('/my-gyms', protect, getMyGyms);
 router.put('/:id', protect, updateGym);

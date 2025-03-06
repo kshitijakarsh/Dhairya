@@ -1,4 +1,4 @@
-import Users from "../models/UserSchema.js";
+import User from "../models/UserSchema.js";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -30,143 +30,118 @@ const generateToken = (id) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-
-    userSchema.parse({ name, email, password, role });
-
-    const userExists = await Users.findOne({ email });
-    if (userExists) {
+    const { email, password, name } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await Users.create({
-      name,
+    const user = new User({
       email,
       password: hashedPassword,
-      role,
+      name
     });
 
-    const token = generateToken(user._id);
-
-    res.status(201).json({
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      token,
-    });
+    await user.save();
+    res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
-    res.status(400).json({ message: error.errors || error.message });
+    console.error("Registration error:", error);
+    res.status(500).json({ message: "Error registering user" });
   }
 };
 
 export const loginUser = async (req, res) => {
   try {
-    console.log("Received login request:", req.body); // ✅ Log request data
-
     const { email, password } = req.body;
-    if (!email || !password) {
-      console.log("Missing email or password");
-      return res.status(400).json({ message: "Email and password are required" });
-    }
-
-    const user = await Users.findOne({ email }).select("+password");
+    const user = await User.findOne({ email });
     if (!user) {
-      console.log("User not found for email:", email);
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      console.log("Password does not match");
-      return res.status(401).json({ message: "Invalid email or password" });
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id);
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
 
-    console.log("Login successful for user:", user.email);
     res.json({
-      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
       token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name
+      }
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: "Error logging in" });
   }
 };
 
-export const updateProfile = async (req, res) => {
-  try {
-    const userId = req.user.id; // From auth middleware
-    const profileData = profileSchema.parse(req.body);
-
-    const updatedUser = await Users.findByIdAndUpdate(
-      userId,
-      { profile: profileData },
-      { new: true, runValidators: true }
-    ).select("-password");
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({
-      message: "Profile updated successfully",
-      profile: updatedUser.profile
-    });
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        message: "Validation error",
-        errors: error.errors
-      });
-    }
-    console.error("Profile update error:", error);
-    res.status(500).json({ message: "Error updating profile" });
-  }
+export const logoutUser = (req, res) => {
+  res.json({ message: "Logged out successfully" });
 };
 
 export const getProfile = async (req, res) => {
   try {
-    const userId = req.user.id; // From auth middleware
-    const user = await Users.findById(userId).select("-password");
-
+    const user = await User.findById(req.user.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    res.status(200).json({
-      profile: user.profile || null
-    });
-
+    res.json(user);
   } catch (error) {
     console.error("Profile fetch error:", error);
     res.status(500).json({ message: "Error fetching profile" });
   }
 };
 
-// export const getCurrentUser = async (req, res) => {
-//   try {
-//     const user = await Users.findById(req.user.id).select("-password");
-//     if (!user) {
-//       return res.status(404).json({ error: "User not found" });
-//     }
-//     res.json(user);
-//   } catch (error) {
-//     console.error("Error fetching user:", error);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// };
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: { name, email } },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      user
+    });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ message: "Error updating profile" });
+  }
+};
+
+export const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ user });
+  } catch (error) {
+    console.error("Get user by ID error:", error);
+    res.status(500).json({ message: "Error fetching user data" });
+  }
+};
 
 export default {
   registerUser,
   loginUser,
-  updateProfile,
+  logoutUser,
   getProfile,
-  // getCurrentUser,
+  updateProfile,
+  getUserById,
 };

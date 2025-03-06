@@ -56,7 +56,7 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
     
     // Check if JWT_SECRET exists
-    if (!process.env.JWT_SECRET) {
+    if (!process.env.JWT_SECRET_KEY) {
       console.error("JWT_SECRET is not defined");
       return res.status(500).json({ message: "Server configuration error" });
     }
@@ -73,7 +73,7 @@ export const loginUser = async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET_KEY,
       { expiresIn: "24h" }
     );
 

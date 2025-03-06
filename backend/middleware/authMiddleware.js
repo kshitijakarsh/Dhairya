@@ -11,7 +11,7 @@ export const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user) => {
       if (err) {
         return res.status(403).json({ message: 'Invalid token' });
       }

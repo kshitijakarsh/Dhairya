@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import Users from "../models/UserSchema.js";
 
 // Protect routes - Authentication check
-export const protect = async (req, res, next) => {
+export const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -35,6 +35,6 @@ const checkRole = (role) => {
 };
 
 export default {
-  protect,
+  authenticateToken,
   checkRole
 }

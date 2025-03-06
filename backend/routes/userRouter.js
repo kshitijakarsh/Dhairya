@@ -1,12 +1,13 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
+import { authenticateToken } from "../middleware/authMiddleware.js";
 import {
   registerUser,
   loginUser,
   updateProfile,
   getProfile,
   logoutUser,
-  getUserById
+  getUserById,
+  createProfile
 } from "../controllers/UserController.js";
 
 const router = express.Router();
@@ -17,8 +18,9 @@ router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 
 // Profile routes (protected)
-router.get("/profile", protect, getProfile);
-router.put("/profile", protect, updateProfile);
-router.get("/:id", protect, getUserById);
+router.get("/profile", authenticateToken, getProfile);
+router.put("/profile", authenticateToken, updateProfile);
+router.post("/profile", authenticateToken, createProfile);
+router.get("/:id", authenticateToken, getUserById);
 
 export default router;

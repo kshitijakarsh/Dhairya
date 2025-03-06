@@ -54,6 +54,13 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+    // Check if JWT_SECRET exists
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined");
+      return res.status(500).json({ message: "Server configuration error" });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -137,6 +144,52 @@ export const getUserById = async (req, res) => {
   }
 };
 
+export const createProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const {
+      age,
+      gender,
+      height,
+      weight,
+      fitnessGoals,
+      programs,
+      medicalConditions,
+      dietaryRestrictions
+    } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user's profile
+    user.profile = {
+      age,
+      gender,
+      height,
+      weight,
+      fitnessGoals,
+      programs,
+      medicalConditions,
+      dietaryRestrictions
+    };
+
+    await user.save();
+
+    res.status(201).json({
+      message: "Profile created successfully",
+      profile: user.profile
+    });
+  } catch (error) {
+    console.error("Profile creation error:", error);
+    res.status(500).json({ 
+      message: "Error creating profile",
+      error: error.message 
+    });
+  }
+};
+
 export default {
   registerUser,
   loginUser,
@@ -144,4 +197,5 @@ export default {
   getProfile,
   updateProfile,
   getUserById,
+  createProfile,
 };

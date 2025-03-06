@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import Users from "../models/UserSchema.js";
 
-// Protect routes - Authentication check
+// Export both named exports and make protect an alias of authenticateToken
 export const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -24,8 +24,11 @@ export const authenticateToken = async (req, res, next) => {
   }
 };
 
+// Add protect as an alias for authenticateToken
+export const protect = authenticateToken;
+
 // Role-based access control
-const checkRole = (role) => {
+export const checkRole = (role) => {
   return (req, res, next) => {
     if (req.user.role !== role) {
       return res.status(403).json({ message: 'Access denied' });
@@ -36,5 +39,6 @@ const checkRole = (role) => {
 
 export default {
   authenticateToken,
+  protect,
   checkRole
 }

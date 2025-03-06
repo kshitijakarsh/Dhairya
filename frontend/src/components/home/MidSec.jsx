@@ -36,29 +36,29 @@ function MidSec() {
   const { user } = useAuth();
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-white to-gray-50">
+    <section className="py-16 bg-gray-50">
       <div className="container">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl font-bold mb-6">
-            Empowering <span className="gradient-text">Every User</span>
+          <h2 className="text-3xl font-bold mb-4">
+            Tailored for <span className="gradient-text">Everyone</span>
           </h2>
-          <p className="text-lg text-gray-600">
-            Whether you're a gym owner, fitness enthusiast, or personal trainer,
-            our platform provides the tools you need to succeed in your fitness journey.
+          <p className="text-gray-600">
+            Whether you're managing a gym, training clients, or pursuing your fitness goals,
+            our platform provides the tools you need to succeed.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="monochrome-card rounded-xl p-8"
+              className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center text-white mb-6">
+              <div className="w-12 h-12 bg-gray-900 text-white rounded-xl flex items-center justify-center mb-6">
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-semibold mb-4">{feature.title}</h3>
-              <p className="text-gray-600 mb-6">{feature.description}</p>
+              <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+              <p className="text-gray-600">{feature.description}</p>
             </div>
           ))}
         </div>
@@ -85,25 +85,27 @@ function MidSec() {
               </svg>
             </Link>
           ) : (
-            <Link
-              to="/register-gym"
-              className="inline-flex items-center monochrome-button"
-            >
-              Register Your Gym
-              <svg
-                className="w-5 h-5 ml-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            user.role === 'Owner' && (
+              <Link
+                to="/register-gym"
+                className="inline-flex items-center monochrome-button"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 7l5 5m0 0l-5 5m5-5H6"
-                />
-              </svg>
-            </Link>
+                Register Your Gym
+                <svg
+                  className="w-5 h-5 ml-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </Link>
+            )
           )}
         </div>
       </div>

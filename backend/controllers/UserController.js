@@ -13,6 +13,17 @@ const userSchema = z.object({
   role: z.enum(["User", "Trainer", "Owner"], { message: "Invalid role" }),
 });
 
+const profileSchema = z.object({
+  age: z.number().min(13).max(100),
+  gender: z.enum(["male", "female", "other"]),
+  height: z.number().positive(),
+  weight: z.number().positive(),
+  fitnessGoals: z.array(z.string()),
+  programs: z.array(z.string()),
+  medicalConditions: z.string().optional(),
+  dietaryRestrictions: z.string().optional()
+});
+
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET_KEY, { expiresIn: "30d" });
 };
@@ -88,7 +99,56 @@ export const loginUser = async (req, res) => {
   }
 };
 
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id; // From auth middleware
+    const profileData = profileSchema.parse(req.body);
 
+    const updatedUser = await Users.findByIdAndUpdate(
+      userId,
+      { profile: profileData },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      profile: updatedUser.profile
+    });
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        message: "Validation error",
+        errors: error.errors
+      });
+    }
+    console.error("Profile update error:", error);
+    res.status(500).json({ message: "Error updating profile" });
+  }
+};
+
+export const getProfile = async (req, res) => {
+  try {
+    const userId = req.user.id; // From auth middleware
+    const user = await Users.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      profile: user.profile || null
+    });
+
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ message: "Error fetching profile" });
+  }
+};
 
 // export const getCurrentUser = async (req, res) => {
 //   try {
@@ -106,5 +166,7 @@ export const loginUser = async (req, res) => {
 export default {
   registerUser,
   loginUser,
+  updateProfile,
+  getProfile,
   // getCurrentUser,
 };

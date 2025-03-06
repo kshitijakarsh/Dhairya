@@ -95,6 +95,20 @@ const UserSchema = new mongoose.Schema({
     // profilePicture : { type: String },
     // userDashboard : { type: mongoose.Schema.Types.ObjectId, ref: "userDashboard" },
   },
+
+  profile: {
+    age: Number,
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"]
+    },
+    height: Number,
+    weight: Number,
+    fitnessGoals: [String],
+    programs: [String],
+    medicalConditions: String,
+    dietaryRestrictions: String
+  }
 }, { timestamps: true });
 
 const Users = mongoose.model("Users", UserSchema);

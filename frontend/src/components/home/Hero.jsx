@@ -3,26 +3,20 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import hero from "../../assets/hero.svg";
 
-function Hero() {
+const Hero = () => {
   const { user } = useAuth();
 
   return (
-    <section className="relative py-12 md:py-20 overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.gray.100),white)]" />
-      
-      <div className="container relative">
-        <div className="grid grid-cols-1 gap-y-12 lg:grid-cols-2 lg:gap-x-16 lg:items-center">
-          <div className="text-center lg:text-left space-y-8 max-w-lg mx-auto lg:mx-0">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-              A place to grow{" "}
-              <span className="gradient-text">stronger and fitter</span>
+    <section className="relative overflow-hidden bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-8">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
+              Find Your Perfect <span className="gradient-text">Fitness</span> Journey
             </h1>
-            
-            <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
-              Train hard, stay consistent, and push beyond limits. Strength
-              grows with discipline, and fitness fuels confidence, energy, and
-              resilience.
+            <p className="text-lg text-gray-600 leading-relaxed">
+              Discover and connect with the best gyms in your area. Whether you're a fitness enthusiast, 
+              trainer, or gym owner, we've got you covered.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
@@ -42,12 +36,14 @@ function Hero() {
                   </Link>
                 </>
               ) : (
-                <Link
-                  to="/register-gym"
-                  className="w-full sm:w-auto monochrome-button"
-                >
-                  Register Your Gym
-                </Link>
+                user.role === 'Owner' && (
+                  <Link
+                    to="/register-gym"
+                    className="w-full sm:w-auto monochrome-button"
+                  >
+                    Register Your Gym
+                  </Link>
+                )
               )}
             </div>
           </div>
@@ -67,6 +63,6 @@ function Hero() {
       </div>
     </section>
   );
-}
+};
 
 export default Hero;

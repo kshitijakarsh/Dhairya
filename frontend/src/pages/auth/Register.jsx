@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { motion } from 'framer-motion';
 
 const roles = [
   {
@@ -68,8 +69,14 @@ const Register = () => {
     setError('');
 
     try {
-      await register(formData);
-      navigate('/');
+      const registeredUser = await register(formData);
+      
+      // If user is a gym goer, redirect to profile setup
+      if (registeredUser.role === 'User') {
+        navigate('/profile/setup');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       setError(error.message);
     } finally {
@@ -116,18 +123,24 @@ const Register = () => {
           {getStepIndicator()}
 
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg animate-shake" role="alert">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-md mx-auto mb-4"
+            >
+              <div className="rounded-md bg-red-50 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           <div className={`transition-all duration-500 transform ${step === 1 ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 hidden'}`}>

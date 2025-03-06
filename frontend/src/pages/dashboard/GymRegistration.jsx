@@ -108,21 +108,80 @@ const GymRegistration = () => {
     setError('');
 
     try {
+      // Token validation
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       if (!token) {
-        throw new Error('Authentication token not found');
+        throw new Error('Your session has expired. Please login again.');
       }
 
       if (!user || !user._id) {
-        throw new Error('User information not found');
+        throw new Error('User session invalid. Please login again.');
       }
 
-      // Validate time format
-      const openTime = formData.operation_hours[0].open;
-      const closeTime = formData.operation_hours[0].close;
-      
-      if (!openTime || !closeTime) {
-        setError('Operating hours are required');
+      // Validate all required fields
+      const validationErrors = [];
+
+      // Basic info validation
+      if (!formData.name.trim()) {
+        validationErrors.push('Gym name is required');
+      }
+
+      // Address validation
+      if (!formData.address.street.trim()) {
+        validationErrors.push('Street address is required');
+      }
+      if (!formData.address.city.trim()) {
+        validationErrors.push('City is required');
+      }
+      if (!formData.address.state.trim()) {
+        validationErrors.push('State is required');
+      }
+      if (!formData.address.zip.trim()) {
+        validationErrors.push('ZIP code is required');
+      } else if (!/^\d{6}$/.test(formData.address.zip)) {
+        validationErrors.push('Please enter a valid 6-digit ZIP code');
+      }
+
+      // Phone validation
+      if (!formData.phone) {
+        validationErrors.push('Phone number is required');
+      } else {
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+          validationErrors.push('Please enter a valid 10-digit phone number');
+        }
+      }
+
+      // Facilities validation
+      if (!formData.facilities || formData.facilities.length === 0) {
+        validationErrors.push('Please select at least one facility');
+      }
+
+      // Operating hours validation
+      const { open, close } = formData.operation_hours[0];
+      if (!open || !close) {
+        validationErrors.push('Operating hours are required');
+      } else {
+        // Validate time format and logic
+        const openTime = new Date(`2000/01/01 ${open}`);
+        const closeTime = new Date(`2000/01/01 ${close}`);
+        
+        if (isNaN(openTime.getTime()) || isNaN(closeTime.getTime())) {
+          validationErrors.push('Please enter valid operating hours');
+        } else if (closeTime <= openTime) {
+          validationErrors.push('Closing time must be after opening time');
+        }
+      }
+
+      // Membership charges validation
+      if (!formData.membership_charges.monthly) {
+        validationErrors.push('Monthly membership charge is required');
+      } else if (isNaN(parseFloat(formData.membership_charges.monthly)) || parseFloat(formData.membership_charges.monthly) <= 0) {
+        validationErrors.push('Please enter a valid monthly membership charge');
+      }
+
+      if (validationErrors.length > 0) {
+        setError(validationErrors.join('\n'));
         setLoading(false);
         return;
       }
@@ -142,8 +201,8 @@ const GymRegistration = () => {
         operation_hours: [
           {
             day: 'All Days',
-            open: formatTime(openTime),
-            close: formatTime(closeTime)
+            open: formatTime(formData.operation_hours[0].open),
+            close: formatTime(formData.operation_hours[0].close)
           }
         ],
         facilities: formData.facilities,
@@ -172,35 +231,32 @@ const GymRegistration = () => {
       console.log('Gym registration successful:', response.data);
       navigate('/');
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Gym registration error:', error);
+      
+      let errorMessage = 'Failed to register gym. Please try again.';
       
       if (error.response) {
-        console.error('Full error response:', error.response);
-        console.error('Error data:', error.response.data);
-        
-        if (error.response.data.type === 'ValidationError') {
-          const errors = error.response.data.message;
-          if (Array.isArray(errors)) {
-            const errorMessages = errors.map(err => {
-              console.log('Validation error:', err);
-              return `${err.path}: ${err.message}`;
-            }).join('\n');
-            setError(errorMessages);
-          } else {
-            setError(error.response.data.message);
-          }
-        } else if (error.response.data.message) {
-          setError(error.response.data.message);
-        } else {
-          setError('Failed to register gym. Please check your input and try again.');
+        switch (error.response.status) {
+          case 400:
+            errorMessage = error.response.data.message || 'Invalid gym registration data. Please check all fields.';
+            break;
+          case 401:
+            errorMessage = 'Your session has expired. Please login again.';
+            break;
+          case 403:
+            errorMessage = 'You do not have permission to register a gym.';
+            break;
+          case 409:
+            errorMessage = 'A gym with this name already exists at this location.';
+            break;
+          default:
+            errorMessage = error.response.data.message || 'Failed to register gym. Please try again.';
         }
-      } else if (error.request) {
-        console.error('Error request:', error.request);
-        setError('No response from server. Please try again.');
-      } else {
-        console.error('Error message:', error.message);
-        setError(error.message || 'Failed to register gym');
+      } else if (error.message) {
+        errorMessage = error.message;
       }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -240,7 +296,12 @@ const GymRegistration = () => {
                 className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
               >
                 {error.split('\n').map((err, index) => (
-                  <p key={index} className="text-sm text-red-600">{err}</p>
+                  <p key={index} className="text-sm text-red-600 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {err}
+                  </p>
                 ))}
               </motion.div>
             )}

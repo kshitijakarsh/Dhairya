@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import Users from "../models/UserSchema.js";
 
-// Export both named exports and make protect an alias of authenticateToken
 export const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -11,21 +10,21 @@ export const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user) => {
-      if (err) {
-        return res.status(403).json({ message: 'Invalid token' });
-      }
-      req.user = user;
-      next();
-    });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+    const user = await Users.findById(decoded.id).select("-password"); // Fetch full user data
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    req.user = user;  // Attach full user object
+    next();
   } catch (error) {
     console.error('Auth middleware error:', error);
     res.status(500).json({ message: 'Authentication error' });
   }
 };
 
-// Add protect as an alias for authenticateToken
-export const protect = authenticateToken;
 
 // Role-based access control
 export const checkRole = (role) => {
@@ -39,6 +38,5 @@ export const checkRole = (role) => {
 
 export default {
   authenticateToken,
-  protect,
   checkRole
 }

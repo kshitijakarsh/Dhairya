@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
+import { authenticateToken } from "../middleware/authMiddleware.js";
 import {
   registerUser,
   loginUser,
@@ -20,14 +20,14 @@ router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 
 // Protected routes
-router.get("/profile", protect, getProfile);
-router.put("/profile", protect, updateProfile);
-router.post("/profile", protect, createProfile);
-router.get("/verify", protect, (req, res) => {
+router.get("/profile", authenticateToken, getProfile);
+router.put("/profile", authenticateToken, updateProfile);
+router.post("/profile", authenticateToken, createProfile);
+router.get("/verify", authenticateToken, (req, res) => {
   res.json({ valid: true });
 });
-router.get("/:id", protect, getUserById);
-router.get('/dashboard', protect, getUserDashboard);
-router.post('/dashboard', protect, createUserDashboard);
+router.get("/:id", authenticateToken, getUserById);
+router.get('/dashboard', authenticateToken, getUserDashboard);
+router.post('/dashboard', authenticateToken, createUserDashboard);
 
 export default router;

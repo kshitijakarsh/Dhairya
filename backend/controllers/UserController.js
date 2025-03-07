@@ -57,7 +57,6 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // Check if JWT_SECRET exists
     if (!process.env.JWT_SECRET_KEY) {
       console.error("JWT_SECRET is not defined");
       return res.status(500).json({ message: "Server configuration error" });
@@ -99,16 +98,23 @@ export const logoutUser = (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Unauthorized - No user ID found" });
+    }
+
     const user = await User.findById(req.user.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    console.log("User Profile Fetched:", user);
     res.json(user);
   } catch (error) {
     console.error("Profile fetch error:", error);
     res.status(500).json({ message: "Error fetching profile" });
   }
 };
+
 
 export const updateProfile = async (req, res) => {
   try {

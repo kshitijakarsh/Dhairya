@@ -74,21 +74,6 @@ const GymDetails = () => {
       transition={{ duration: 0.5 }}
       className="min-h-screen bg-gray-50"
     >
-      {/* Back Button */}
-      <motion.div 
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="fixed top-8 left-8 z-20"
-      >
-        <Link
-          to="/search"
-          className="flex items-center gap-2 px-6 py-3 bg-white rounded-full shadow-md hover:shadow-lg transition-all text-gray-700 hover:translate-x-[-4px]"
-        >
-          <FaArrowLeft className="w-4 h-4" />
-          <span className="font-medium">Back to Search</span>
-        </Link>
-      </motion.div>
 
       {/* Hero Section with Carousel */}
       <div className="relative h-[400px] overflow-hidden">

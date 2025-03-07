@@ -79,7 +79,7 @@ const Search = () => {
   }, [debouncedSearchTerm, handleSearch]);
 
   return (
-    <div className="flex flex-col items-center min-h-screen pt-14">
+    <div className="flex flex-col items-center min-h-screen">
       {/* Search Header */}
       <div className="text-center mb-16">
         <h1 className="text-[40px] text-gray-900 mb-4">Find Your Perfect Gym</h1>

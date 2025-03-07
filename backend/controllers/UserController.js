@@ -3,6 +3,8 @@ import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import UserDashboard from '../models/UserDashboard.js';
+import mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -133,14 +135,38 @@ export const updateProfile = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    const { id } = req.params;
+
+    // Check if the ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ 
+        message: "Invalid user ID format" 
+      });
+    }
+
+    const user = await User.findById(id)
+      .select("-password") // Exclude password
+      .populate("profile"); // Include profile if needed
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json({ user });
+
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profile: user.profile
+      }
+    });
   } catch (error) {
     console.error("Get user by ID error:", error);
-    res.status(500).json({ message: "Error fetching user data" });
+    res.status(500).json({ 
+      message: "Error fetching user data",
+      error: error.message 
+    });
   }
 };
 
@@ -190,6 +216,50 @@ export const createProfile = async (req, res) => {
   }
 };
 
+export const getUserDashboard = async (req, res) => {
+  try {
+    const dashboard = await UserDashboard.findOne({ userId: req.user.id });
+    if (!dashboard) {
+      return res.status(404).json({ message: "Dashboard not found" });
+    }
+    res.json(dashboard);
+  } catch (error) {
+    console.error("Get dashboard error:", error);
+    res.status(500).json({ message: "Error fetching dashboard" });
+  }
+};
+
+export const createUserDashboard = async (req, res) => {
+  try {
+    const { currentWeight, targetWeight, height, calorieTarget } = req.body;
+
+    // Check if dashboard already exists
+    let dashboard = await UserDashboard.findOne({ userId: req.user.id });
+    if (dashboard) {
+      return res.status(400).json({ message: "Dashboard already exists" });
+    }
+
+    // Create new dashboard
+    dashboard = new UserDashboard({
+      userId: req.user.id,
+      currentWeight,
+      targetWeight,
+      height,
+      calorieTarget,
+      monthlyData: [{
+        date: new Date().toISOString(),
+        weight: currentWeight
+      }]
+    });
+
+    await dashboard.save();
+    res.status(201).json(dashboard);
+  } catch (error) {
+    console.error("Create dashboard error:", error);
+    res.status(500).json({ message: "Error creating dashboard" });
+  }
+};
+
 export default {
   registerUser,
   loginUser,
@@ -198,4 +268,6 @@ export default {
   updateProfile,
   getUserById,
   createProfile,
+  getUserDashboard,
+  createUserDashboard,
 };

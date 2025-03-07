@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaTimes, FaBars } from 'react-icons/fa';
+import { FaTimes, FaBars, FaUser } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE_URL } from '../../constants';
@@ -31,11 +31,12 @@ const Header = () => {
 
   const checkUserProfile = async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.get(
-        `${API_BASE_URL}/users/profile/${user._id}`,
+        `${API_BASE_URL}/api/users/profile`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
@@ -49,6 +50,9 @@ const Header = () => {
     logout();
     navigate('/');
   };
+
+  // Function to check if user is a gym goer
+  const isGymGoer = user && user.role === 'User';
 
   return (
     <header className="bg-white shadow-sm fixed w-full top-0 z-50">
@@ -85,12 +89,16 @@ const Header = () => {
                     <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black origin-left transform scale-x-0 transition-transform duration-200 group-hover:scale-x-100" />
                   </Link>
                 )}
-                {user.role === 'User' && (
+                {isGymGoer && (
                   <Link
-                    to={hasProfile ? '/dashboard' : '/profile/setup'}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors duration-200"
+                    to="/dashboard"
+                    className="relative group flex items-center"
                   >
-                    My Dashboard
+                    <FaUser className="mr-2" />
+                    <span className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors duration-200">
+                      Dashboard
+                    </span>
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black origin-left transform scale-x-0 transition-transform duration-200 group-hover:scale-x-100" />
                   </Link>
                 )}
                 <button
@@ -157,18 +165,19 @@ const Header = () => {
                       <Link
                         to="/register-gym"
                         className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-colors duration-200"
-                        onClick={() => setIsMenuOpen(false)}
+                        onClick={() => setIsOpen(false)}
                       >
                         Register Gym
                       </Link>
                     )}
-                    {user.role === 'User' && (
+                    {isGymGoer && (
                       <Link
-                        to={hasProfile ? '/dashboard' : '/profile/setup'}
-                        className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-colors duration-200"
-                        onClick={() => setIsMenuOpen(false)}
+                        to="/dashboard"
+                        className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                        onClick={() => setIsOpen(false)}
                       >
-                        My Dashboard
+                        <FaUser className="mr-2" />
+                        Dashboard
                       </Link>
                     )}
                     <button
@@ -186,14 +195,14 @@ const Header = () => {
                     <Link
                       to="/login"
                       className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-colors duration-200"
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={() => setIsOpen(false)}
                     >
                       Login
                     </Link>
                     <Link
                       to="/register"
                       className="block px-4 py-2 text-base font-medium text-white bg-black hover:bg-gray-900 transition-colors duration-200"
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={() => setIsOpen(false)}
                     >
                       Register
                     </Link>

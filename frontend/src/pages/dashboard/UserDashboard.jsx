@@ -6,12 +6,21 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '../../constants';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const UserDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    currentWeight: '',
+    targetWeight: '',
+    height: '',
+    calorieTarget: ''
+  });
   const [newWeight, setNewWeight] = useState('');
   const [markedDates, setMarkedDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -24,17 +33,43 @@ const UserDashboard = () => {
     try {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       const response = await axios.get(
-        `${API_BASE_URL}/users/profile/${user._id}`,
+        `${API_BASE_URL}/api/users/dashboard`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
       );
-      setUserData(response.data);
-      setMarkedDates(response.data.workoutDates || []);
+      
+      if (!response.data) {
+        setShowForm(true);
+      } else {
+        setUserData(response.data);
+        setMarkedDates(response.data.workoutDates || []);
+      }
     } catch (error) {
-      setError(error.response?.data?.message || 'Failed to load profile data');
+      if (error.response?.status === 404) {
+        setShowForm(true);
+      } else {
+        setError(error.response?.data?.message || 'Failed to load profile data');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      await axios.post(
+        `${API_BASE_URL}/api/users/dashboard`,
+        formData,
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+      fetchUserData();
+    } catch (error) {
+      setError(error.response?.data?.message || 'Failed to create dashboard');
     }
   };
 
@@ -80,7 +115,84 @@ const UserDashboard = () => {
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
-  if (!userData) return <div>No data found</div>;
+
+  if (showForm) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow">
+          <h2 className="text-2xl font-bold mb-6">Set Up Your Dashboard</h2>
+          <form onSubmit={handleFormSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Current Weight (kg)</label>
+              <input
+                type="number"
+                name="currentWeight"
+                value={formData.currentWeight}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  currentWeight: e.target.value
+                }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Target Weight (kg)</label>
+              <input
+                type="number"
+                name="targetWeight"
+                value={formData.targetWeight}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  targetWeight: e.target.value
+                }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Height (cm)</label>
+              <input
+                type="number"
+                name="height"
+                value={formData.height}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  height: e.target.value
+                }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Daily Calorie Target</label>
+              <input
+                type="number"
+                name="calorieTarget"
+                value={formData.calorieTarget}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  calorieTarget: e.target.value
+                }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+            >
+              Create Dashboard
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const weightData = {
     labels: userData.weightHistory.map(entry => 

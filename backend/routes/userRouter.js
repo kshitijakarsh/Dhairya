@@ -7,7 +7,9 @@ import {
   getProfile,
   logoutUser,
   getUserById,
-  createProfile
+  createProfile,
+  getUserDashboard,
+  createUserDashboard
 } from "../controllers/UserController.js";
 
 const router = express.Router();
@@ -21,6 +23,11 @@ router.post("/logout", logoutUser);
 router.get("/profile", protect, getProfile);
 router.put("/profile", protect, updateProfile);
 router.post("/profile", protect, createProfile);
+router.get("/verify", protect, (req, res) => {
+  res.json({ valid: true });
+});
 router.get("/:id", protect, getUserById);
+router.get('/dashboard', protect, getUserDashboard);
+router.post('/dashboard', protect, createUserDashboard);
 
 export default router;

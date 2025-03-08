@@ -60,21 +60,33 @@ export const AuthProvider = ({ children }) => {
 
   const register = async ({ name, email, password, role }) => {
     try {
+      console.log("Registering user with:", { name, email, password, role });
+  
       const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.REGISTER}`, {
         name,
         email,
         password,
-        role: ROLE_MAPPINGS[role]
+        role: ROLE_MAPPINGS[role] || "User"
       });
-
+  
+      console.log("Full API Response:", response.data);
+  
       const { token, user } = response.data;
+      if (!token || !user) {
+        throw new Error("Invalid response from server");
+      }
+  
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
       setUser(user);
+      console.log("User set in state:", user);
+  
       return user;
     } catch (error) {
-      throw error.response?.data?.message || 'Registration failed';
+      console.error("Registration failed:", error.response?.data || error);
+      throw error.response?.data?.message || "Registration failed";
     }
   };
+  
 
   const logout = () => {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);

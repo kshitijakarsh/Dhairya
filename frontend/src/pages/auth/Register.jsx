@@ -70,8 +70,9 @@ const Register = () => {
 
     try {
       const registeredUser = await register(formData);
+      console.log(registeredUser);
       
-      // If user is a gym goer, redirect to profile setup
+      
       if (registeredUser.role === 'User') {
         navigate('/profile/setup');
       } else {

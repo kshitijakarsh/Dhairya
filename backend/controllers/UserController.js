@@ -1,5 +1,4 @@
 import User from "../models/UserSchema.js";
-import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
@@ -7,28 +6,6 @@ import UserDashboard from '../models/UserDashboard.js';
 import mongoose from 'mongoose';
 
 dotenv.config();
-
-const userSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["User", "Trainer", "Owner"], { message: "Invalid role" }),
-});
-
-const profileSchema = z.object({
-  age: z.number().min(13).max(100),
-  gender: z.enum(["male", "female", "other"]),
-  height: z.number().positive(),
-  weight: z.number().positive(),
-  fitnessGoals: z.array(z.string()),
-  programs: z.array(z.string()),
-  medicalConditions: z.string().optional(),
-  dietaryRestrictions: z.string().optional()
-});
-
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET_KEY, { expiresIn: "30d" });
-};
 
 export const registerUser = async (req, res) => {
   try {

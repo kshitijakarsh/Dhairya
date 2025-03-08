@@ -11,11 +11,12 @@ import {
   getUserDashboard,
   createUserDashboard
 } from "../controllers/UserController.js";
+import { validateUser } from "../middleware/validationMiddleware.js";
 
 const router = express.Router();
 
 // Public routes
-router.post("/register", registerUser);
+router.post("/register", validateUser, registerUser);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 

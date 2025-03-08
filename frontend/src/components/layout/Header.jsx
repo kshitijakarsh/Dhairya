@@ -7,33 +7,14 @@ import axios from "axios";
 import { API_BASE_URL } from "../../constants";
 
 const Header = () => {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
   
 
-  useEffect(() => {
-    if (user && user.role === "User") {
-      checkUserProfile();
-    }
-  }, [user]);
-
-  const checkUserProfile = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_BASE_URL}/api/users/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("Profile Response:", response.data); // Log response
-      setHasProfile(!!response.data);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      setHasProfile(false);
-    }
-  };
+  const { user, logout } = useAuth();
+  console.log(user);
+  
   
 
   const handleLogout = () => {
@@ -54,7 +35,7 @@ const Header = () => {
           {/* Navigation Links - Always Visible */}
           <div className="hidden sm:flex sm:items-center sm:space-x-6">
             <Link to="/search" className="relative group">
-              <span className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors duration-200">
+              <span className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black transition-colors duration-200">
                 Locate
               </span>
               <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black origin-left transform scale-x-0 transition-transform duration-200 group-hover:scale-x-100" />
@@ -63,7 +44,7 @@ const Header = () => {
               <div className="flex items-center space-x-6">
                 {user.role === "Owner" && (
                   <Link to="/register-gym" className="relative group">
-                    <span className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors duration-200">
+                    <span className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-blacktransition-colors duration-200">
                       Register Gym
                     </span>
                     <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black origin-left transform scale-x-0 transition-transform duration-200 group-hover:scale-x-100" />
@@ -74,7 +55,6 @@ const Header = () => {
                     to="/dashboard"
                     className="relative group flex items-center"
                   >
-                    <FaUser className="mr-2" />
                     <span className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors duration-200">
                       Dashboard
                     </span>
@@ -91,7 +71,7 @@ const Header = () => {
             ) : (
               <div className="flex items-center space-x-6">
                 <Link to="/login" className="relative group">
-                  <span className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors duration-200">
+                  <span className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black transition-colors duration-200">
                     Login
                   </span>
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black origin-left transform scale-x-0 transition-transform duration-200 group-hover:scale-x-100" />
@@ -134,7 +114,7 @@ const Header = () => {
               <div className="px-2 pt-2 pb-3 space-y-1">
                 <Link
                   to="/search"
-                  className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-colors duration-200"
+                  className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-blacktransition-colors duration-200"
                   onClick={() => setIsOpen(false)}
                 >
                   Locate
@@ -144,7 +124,7 @@ const Header = () => {
                     {user.role === "Owner" && (
                       <Link
                         to="/register-gym"
-                        className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-colors duration-200"
+                        className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black transition-colors duration-200"
                         onClick={() => setIsOpen(false)}
                       >
                         Register Gym
@@ -153,10 +133,9 @@ const Header = () => {
                     {user.role === "User" && (
                       <Link
                         to="/dashboard"
-                        className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-colors duration-200"
+                        className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-blacktransition-colors duration-200"
                         onClick={() => setIsOpen(false)}
                       >
-                        <FaUser className="mr-2" />
                         Dashboard
                       </Link>
                     )}
@@ -172,7 +151,7 @@ const Header = () => {
                   <>
                     <Link
                       to="/login"
-                      className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 transition-colors duration-200"
+                      className="block px-4 py-2 text-base font-medium text-gray-700 hover:text-black transition-colors duration-200"
                       onClick={() => setIsOpen(false)}
                     >
                       Login

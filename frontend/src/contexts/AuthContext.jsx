@@ -41,16 +41,22 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.LOGIN}`, {
         email,
-        password
+        password,
       });
+  
+      console.log("Full Response:", response.data); // Logs entire response
+  
       const { token, user } = response.data;
+      console.log("Extracted User Data:", user); // Logs only the user object
+  
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
       setUser(user);
       return user;
     } catch (error) {
-      throw error.response?.data?.message || 'Login failed';
+      console.error("Login Error:", error.response?.data || error);
+      throw error.response?.data?.message || "Login failed";
     }
-  };
+  };  
 
   const register = async ({ name, email, password, role }) => {
     try {

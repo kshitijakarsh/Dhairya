@@ -27,11 +27,14 @@ const Header = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log("Profile Response:", response.data); // Log response
       setHasProfile(!!response.data);
     } catch (error) {
+      console.error("Error fetching profile:", error);
       setHasProfile(false);
     }
   };
+  
 
   const handleLogout = () => {
     logout();

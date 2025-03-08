@@ -56,11 +56,6 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
-    if (!process.env.JWT_SECRET_KEY) {
-      console.error("JWT_SECRET is not defined");
-      return res.status(500).json({ message: "Server configuration error" });
-    }
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -77,13 +72,15 @@ export const loginUser = async (req, res) => {
       process.env.JWT_SECRET_KEY,
       { expiresIn: "24h" }
     );
+    
 
     res.json({
       token,
       user: {
         id: user._id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        role: user.role
       }
     });
   } catch (error) {
@@ -97,6 +94,8 @@ export const logoutUser = (req, res) => {
 };
 
 export const getProfile = async (req, res) => {
+  console.log("request received");
+  
   try {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: "Unauthorized - No user ID found" });

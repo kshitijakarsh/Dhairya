@@ -8,8 +8,9 @@ import mongoose from 'mongoose';
 dotenv.config();
 
 export const registerUser = async (req, res) => {
+  console.log(req.body);
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, role } = req.body;
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
@@ -19,7 +20,8 @@ export const registerUser = async (req, res) => {
     const user = new User({
       email,
       password: hashedPassword,
-      name
+      name,
+      role
     });
 
     await user.save();

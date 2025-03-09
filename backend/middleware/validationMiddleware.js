@@ -9,6 +9,8 @@ const userSchema = z.object({
 
 
 export const validateUser = (req, res, next) => {
+  console.log(req.body);
+  
     try {
       req.body = userSchema.parse(req.body); 
       next();

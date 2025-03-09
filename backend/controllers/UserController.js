@@ -163,6 +163,8 @@ export const createProfile = async (req, res) => {
 
 
 export const getUserDashboard = async (req, res) => {
+  console.log('request received');
+  
   try {
     const user = await User.findById(req.user.id);
     if (!user) {

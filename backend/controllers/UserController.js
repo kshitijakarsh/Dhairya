@@ -86,125 +86,71 @@ export const logoutUser = (req, res) => {
   res.json({ message: "Logged out successfully" });
 };
 
-export const getProfile = async (req, res) => {
-  console.log("request received");
-
-  try {
-    if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized - No user ID found" });
-    }
-
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    console.log("User Profile Fetched:", user);
-    res.json(user);
-  } catch (error) {
-    console.error("Profile fetch error:", error);
-    res.status(500).json({ message: "Error fetching profile" });
-  }
-};
-
-export const updateProfile = async (req, res) => {
-  try {
-    const { name, email } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { $set: { name, email } },
-      { new: true }
-    ).select("-password");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({
-      message: "Profile updated successfully",
-      user,
-    });
-  } catch (error) {
-    console.error("Profile update error:", error);
-    res.status(500).json({ message: "Error updating profile" });
-  }
-};
-
-export const getUserById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Check if the ID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: "Invalid user ID format",
-      });
-    }
-
-    const user = await User.findById(id)
-      .select("-password") // Exclude password
-      .populate("profile"); // Include profile if needed
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profile: user.profile,
-      },
-    });
-  } catch (error) {
-    console.error("Get user by ID error:", error);
-    res.status(500).json({
-      message: "Error fetching user data",
-      error: error.message,
-    });
-  }
-};
-
 export const createProfile = async (req, res) => {
+  console.log(req.body); // Log incoming request data for debugging
+
   try {
-    const userId = req.user.id;
+    const userId = req.user.id; // Extract userId from auth middleware
     const {
       age,
       gender,
       height,
-      weight,
+      currentWeight,
+      targetWeight,
+      calorieTarget,
       fitnessGoals,
-      programs,
-      medicalConditions,
-      dietaryRestrictions,
+      programmes,
+      gymEnrolled,
+      gymName,
+      budget,
     } = req.body;
 
+    // ✅ Ensure user exists before proceeding
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Update user's profile
-    user.profile = {
-      age,
-      gender,
-      height,
-      weight,
-      fitnessGoals,
-      programs,
-      medicalConditions,
-      dietaryRestrictions,
+    // ✅ Prevent duplicate dashboard creation
+    if (user.dashboardId) {
+      return res.status(400).json({ message: "Dashboard already exists" });
+    }
+
+    // ✅ Initialize weight history with the current weight
+    const weightEntry = {
+      weight: parseFloat(currentWeight),
+      date: new Date().toISOString(),
     };
 
+    // ✅ Create a new UserDashboard
+    const dashboard = new UserDashboard({
+      userId,
+      profile: {
+        age,
+        gender,
+        height,
+        fitnessGoals,
+        programs: programmes,
+      },
+      userDetails: {
+        gymEnrolled,
+        gymName: gymEnrolled ? gymName : null,
+        budget,
+      },
+      monthlyData: [weightEntry],
+      targetWeight,
+      calorieTarget,
+    });
+
+    await dashboard.save();
+
+    // ✅ Link dashboard to user
+    user.dashboardId = dashboard._id;
     await user.save();
 
     res.status(201).json({
       message: "Profile created successfully",
-      profile: user.profile,
+      dashboard,
     });
   } catch (error) {
     console.error("Profile creation error:", error);
@@ -215,60 +161,34 @@ export const createProfile = async (req, res) => {
   }
 };
 
+
 export const getUserDashboard = async (req, res) => {
   try {
-    const dashboard = await UserDashboard.findOne({ userId: req.user.id });
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const dashboard = await UserDashboard.findOne({ userId: user._id });
     if (!dashboard) {
-      return res.status(404).json({ message: "Dashboard not found" });
+      return res.status(404).json({ message: "Dashboard not found. Please complete your profile setup." });
     }
-    res.json(dashboard);
-  } catch (error) {
-    console.error("Get dashboard error:", error);
-    res.status(500).json({ message: "Error fetching dashboard" });
-  }
-};
-
-export const createUserDashboard = async (req, res) => {
-  try {
-    const { currentWeight, targetWeight, height, calorieTarget } = req.body;
-
-    // Check if dashboard already exists
-    let dashboard = await UserDashboard.findOne({ userId: req.user.id });
-    if (dashboard) {
-      return res.status(400).json({ message: "Dashboard already exists" });
-    }
-
-    // Create new dashboard
-    dashboard = new UserDashboard({
-      userId: req.user.id,
-      currentWeight,
-      targetWeight,
-      height,
-      calorieTarget,
-      monthlyData: [
-        {
-          date: new Date().toISOString(),
-          weight: currentWeight,
-        },
-      ],
+    res.status(200).json({
+      success: true,
+      message: "Dashboard retrieved successfully",
+      dashboard,
     });
-
-    await dashboard.save();
-    res.status(201).json(dashboard);
   } catch (error) {
-    console.error("Create dashboard error:", error);
-    res.status(500).json({ message: "Error creating dashboard" });
+    console.error("Error fetching dashboard:", error);
+    res.status(500).json({ message: "Error fetching dashboard", error: error.message });
   }
 };
+
 
 export default {
   registerUser,
   loginUser,
   logoutUser,
-  getProfile,
-  updateProfile,
-  getUserById,
   createProfile,
   getUserDashboard,
-  createUserDashboard,
 };

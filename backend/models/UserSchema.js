@@ -17,6 +17,12 @@ const UserSchema = new mongoose.Schema({
     required: true,
   },
 
+  dashboardId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "UserDashboard",
+    default: null, // Initially, no dashboard exists
+  },
+
   ownerDetails: {
     contact: { type: String },
     gyms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Gym" }],
@@ -54,61 +60,6 @@ const UserSchema = new mongoose.Schema({
     approved: { type: Boolean, default: false },
     // trainerDashboard : { type: mongoose.Schema.Types.ObjectId, ref: "trainerDashboard" },
   },
-
-  userDetails: {
-    programmes: [{
-      type: String,
-      enum: [
-        "Cardio",
-        "Weightlifting",
-        "Zumba",
-        "CrossFit",
-        "Yoga",
-        "Boxing",
-        "HIIT",
-        "Pilates",
-        "Calisthenics",
-        "Powerlifting",
-        "Bodybuilding",
-        "Olympic Weightlifting",
-        "Kickboxing",
-        "Spinning",
-        "Athletic Conditioning",
-        "Circuit Training",
-        "Martial Arts",
-        "Swimming",
-        "Functional Training",
-      ],
-    }],
-    budget: { type: String },
-    gymEnrolled: { type: Boolean, default: false },
-    gymName: {
-      type: String,
-      validate: {
-        validator: function (value) {
-          return this.gymEnrolled ? !!value : true;
-        },
-        message: "Gym name is required when gymEnrolled is true",
-      },
-    },
-    location: { type: String },
-    // profilePicture : { type: String },
-    // userDashboard : { type: mongoose.Schema.Types.ObjectId, ref: "userDashboard" },
-  },
-
-  profile: {
-    age: Number,
-    gender: {
-      type: String,
-      enum: ["male", "female", "other"]
-    },
-    height: Number,
-    weight: Number,
-    fitnessGoals: [String],
-    programs: [String],
-    medicalConditions: String,
-    dietaryRestrictions: String
-  }
 }, { timestamps: true });
 
 const Users = mongoose.model("Users", UserSchema);

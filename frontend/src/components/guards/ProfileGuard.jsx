@@ -17,7 +17,7 @@ const ProfileGuard = ({ children }) => {
     try {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       const response = await axios.get(
-        `${API_BASE_URL}/users/profile/${user._id}`,
+        `${API_BASE_URL}/users/dashboard`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }

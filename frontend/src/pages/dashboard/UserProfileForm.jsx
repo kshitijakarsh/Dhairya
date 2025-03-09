@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '../../constants';
-import { FaDumbbell, FaWeight, FaRuler, FaFire, FaCheck } from 'react-icons/fa';
+import { FaDumbbell, FaWeight, FaRuler, FaFire, FaCheck, FaUser, FaBullseye } from 'react-icons/fa';
 
 const UserProfileForm = () => {
   const navigate = useNavigate();
@@ -13,16 +13,33 @@ const UserProfileForm = () => {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
+    age: '',
+    gender: '',
+    height: '',
     currentWeight: '',
     targetWeight: '',
-    height: '',
     calorieTarget: '',
-    programmes: [], // From schema
-    budget: '', // From schema
-    location: '' // From schema
+    fitnessGoals: [],
+    programmes: [],
+    gymEnrolled: false,
+    gymName: '',
+    budget: ''
   });
 
-  // Available programmes from schema
+  const genderOptions = [
+    "male",
+    "female",
+    "other"
+  ];
+
+  const fitnessGoalsOptions = [
+    "Weight Loss & Fat Reduction",
+    "Muscle Gain & Toning",
+    "Increasing Strength & Endurance",
+    "Improving Flexibility & Mobility",
+    "Overall Health & Wellness"
+  ];
+
   const programmeOptions = [
     "Cardio",
     "Weightlifting",
@@ -54,10 +71,11 @@ const UserProfileForm = () => {
   ];
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value,
+      ...(name === 'gymEnrolled' && !checked ? { gymName: '' } : {})
     }));
   };
 
@@ -70,6 +88,15 @@ const UserProfileForm = () => {
     }));
   };
 
+  const handleFitnessGoalsChange = (goal) => {
+    setFormData(prev => ({
+      ...prev,
+      fitnessGoals: prev.fitnessGoals.includes(goal)
+        ? prev.fitnessGoals.filter(g => g !== goal)
+        : [...prev.fitnessGoals, goal]
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -79,13 +106,15 @@ const UserProfileForm = () => {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       if (!token) throw new Error('Please login to continue');
 
-      // Add initial weight entry with current date
       const weightEntry = {
         weight: parseFloat(formData.currentWeight),
         date: new Date().toISOString()
       };
 
-      await axios.post(
+      console.log(formData);
+      
+
+      const response = await axios.post(
         `${API_BASE_URL}/users/profile`,
         {
           ...formData,
@@ -99,7 +128,9 @@ const UserProfileForm = () => {
         }
       );
 
-      navigate('/dashboard');
+      if(response.status === 201){
+        navigate("/")
+      }
     } catch (error) {
       setError(error.response?.data?.message || error.message);
     } finally {
@@ -149,10 +180,71 @@ const UserProfileForm = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Personal Information Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">Personal Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-medium text-gray-700">
+                      <FaUser className="w-4 h-4 mr-2" />
+                      Age
+                    </label>
+                    <input
+                      type="number"
+                      name="age"
+                      value={formData.age}
+                      onChange={handleChange}
+                      required
+                      min="13"
+                      max="100"
+                      className="w-full px-4 py-3 rounded-xl border-gray-300 hover:border-black focus:border-black focus:ring-black transition-colors duration-200"
+                      placeholder="Enter your age"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-medium text-gray-700">
+                      <FaUser className="w-4 h-4 mr-2" />
+                      Gender
+                    </label>
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 rounded-xl border-gray-300 hover:border-black focus:border-black focus:ring-black transition-colors duration-200"
+                    >
+                      <option value="">Select your gender</option>
+                      {genderOptions.map(gender => (
+                        <option key={gender} value={gender}>
+                          {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               {/* Basic Measurements Section */}
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-6">Basic Measurements</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-medium text-gray-700">
+                      <FaRuler className="w-4 h-4 mr-2" />
+                      Height (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="height"
+                      value={formData.height}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 rounded-xl border-gray-300 hover:border-black focus:border-black focus:ring-black transition-colors duration-200"
+                      placeholder="Enter your height"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700">
                       <FaWeight className="w-4 h-4 mr-2" />
@@ -187,22 +279,6 @@ const UserProfileForm = () => {
 
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700">
-                      <FaRuler className="w-4 h-4 mr-2" />
-                      Height (cm)
-                    </label>
-                    <input
-                      type="number"
-                      name="height"
-                      value={formData.height}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 rounded-xl border-gray-300 hover:border-black focus:border-black focus:ring-black transition-colors duration-200"
-                      placeholder="Enter your height"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="flex items-center text-sm font-medium text-gray-700">
                       <FaFire className="w-4 h-4 mr-2" />
                       Daily Calorie Target
                     </label>
@@ -219,43 +295,112 @@ const UserProfileForm = () => {
                 </div>
               </div>
 
-              {/* Preferences Section */}
+              {/* Fitness Goals Section */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-6">Preferences</h3>
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Preferred Training Programs
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-                      {programmeOptions.map(program => (
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">Fitness Goals</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <FaBullseye className="w-4 h-4 mr-2" />
+                    Select Your Goals
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    {fitnessGoalsOptions.map(goal => (
+                      <div 
+                        key={goal}
+                        className="relative flex items-center"
+                      >
                         <div 
-                          key={program}
-                          className="relative flex items-center"
+                          onClick={() => handleFitnessGoalsChange(goal)}
+                          className={`
+                            flex items-center justify-between w-full p-4 rounded-xl cursor-pointer
+                            border transition-all duration-200
+                            ${formData.fitnessGoals.includes(goal)
+                              ? 'border-black bg-black text-white'
+                              : 'border-gray-200 hover:border-black'
+                            }
+                          `}
                         >
-                          <div 
-                            onClick={() => handleProgrammesChange(program)}
-                            className={`
-                              flex items-center justify-between w-full p-4 rounded-xl cursor-pointer
-                              border transition-all duration-200
-                              ${formData.programmes.includes(program)
-                                ? 'border-black bg-black text-white'
-                                : 'border-gray-200 hover:border-black'
-                              }
-                            `}
-                          >
-                            <span className="text-sm font-medium">{program}</span>
-                            {formData.programmes.includes(program) && (
-                              <FaCheck className="w-4 h-4 ml-2" />
-                            )}
-                          </div>
+                          <span className="text-sm font-medium">{goal}</span>
+                          {formData.fitnessGoals.includes(goal) && (
+                            <FaCheck className="w-4 h-4 ml-2" />
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Select all that apply
-                    </p>
+                      </div>
+                    ))}
                   </div>
+                </div>
+              </div>
+
+              {/* Training Programs Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">Training Programs</h3>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Preferred Training Programs
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                    {programmeOptions.map(program => (
+                      <div 
+                        key={program}
+                        className="relative flex items-center"
+                      >
+                        <div 
+                          onClick={() => handleProgrammesChange(program)}
+                          className={`
+                            flex items-center justify-between w-full p-4 rounded-xl cursor-pointer
+                            border transition-all duration-200
+                            ${formData.programmes.includes(program)
+                              ? 'border-black bg-black text-white'
+                              : 'border-gray-200 hover:border-black'
+                            }
+                          `}
+                        >
+                          <span className="text-sm font-medium">{program}</span>
+                          {formData.programmes.includes(program) && (
+                            <FaCheck className="w-4 h-4 ml-2" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Gym Enrollment Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">Gym Details</h3>
+                <div className="space-y-6">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="gymEnrolled"
+                      id="gymEnrolled"
+                      checked={formData.gymEnrolled}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                    />
+                    <label htmlFor="gymEnrolled" className="ml-2 block text-sm text-gray-900">
+                      I am already enrolled in a gym
+                    </label>
+                  </div>
+
+                  {formData.gymEnrolled && (
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-gray-700">
+                        <FaDumbbell className="w-4 h-4 mr-2" />
+                        Gym Name
+                      </label>
+                      <input
+                        type="text"
+                        name="gymName"
+                        value={formData.gymName}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 rounded-xl border-gray-300 hover:border-black focus:border-black focus:ring-black transition-colors duration-200"
+                        placeholder="Enter your gym name"
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
@@ -275,21 +420,6 @@ const UserProfileForm = () => {
                         </option>
                       ))}
                     </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Preferred Location
-                    </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 rounded-xl border-gray-300 hover:border-black focus:border-black focus:ring-black transition-colors duration-200"
-                      placeholder="Enter your preferred gym location"
-                    />
                   </div>
                 </div>
               </div>

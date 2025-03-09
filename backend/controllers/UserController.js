@@ -2,13 +2,12 @@ import User from "../models/UserSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import UserDashboard from '../models/UserDashboard.js';
-import mongoose from 'mongoose';
+import UserDashboard from "../models/UserDashboard.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 
 export const registerUser = async (req, res) => {
-  console.log(req.body);
   try {
     const { email, password, name, role } = req.body;
     const existingUser = await User.findOne({ email });
@@ -21,11 +20,27 @@ export const registerUser = async (req, res) => {
       email,
       password: hashedPassword,
       name,
-      role
+      role,
     });
 
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "24h" }
+    );
+
     await user.save();
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      message: "User registered successfully",
+    });
+    
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ message: "Error registering user" });
@@ -51,7 +66,6 @@ export const loginUser = async (req, res) => {
       process.env.JWT_SECRET_KEY,
       { expiresIn: "24h" }
     );
-    
 
     res.json({
       token,
@@ -59,8 +73,8 @@ export const loginUser = async (req, res) => {
         id: user._id,
         email: user.email,
         name: user.name,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -74,10 +88,12 @@ export const logoutUser = (req, res) => {
 
 export const getProfile = async (req, res) => {
   console.log("request received");
-  
+
   try {
     if (!req.user || !req.user.id) {
-      return res.status(401).json({ message: "Unauthorized - No user ID found" });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized - No user ID found" });
     }
 
     const user = await User.findById(req.user.id).select("-password");
@@ -92,7 +108,6 @@ export const getProfile = async (req, res) => {
     res.status(500).json({ message: "Error fetching profile" });
   }
 };
-
 
 export const updateProfile = async (req, res) => {
   try {
@@ -109,7 +124,7 @@ export const updateProfile = async (req, res) => {
 
     res.json({
       message: "Profile updated successfully",
-      user
+      user,
     });
   } catch (error) {
     console.error("Profile update error:", error);
@@ -123,8 +138,8 @@ export const getUserById = async (req, res) => {
 
     // Check if the ID is a valid MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ 
-        message: "Invalid user ID format" 
+      return res.status(400).json({
+        message: "Invalid user ID format",
       });
     }
 
@@ -142,14 +157,14 @@ export const getUserById = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        profile: user.profile
-      }
+        profile: user.profile,
+      },
     });
   } catch (error) {
     console.error("Get user by ID error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Error fetching user data",
-      error: error.message 
+      error: error.message,
     });
   }
 };
@@ -165,7 +180,7 @@ export const createProfile = async (req, res) => {
       fitnessGoals,
       programs,
       medicalConditions,
-      dietaryRestrictions
+      dietaryRestrictions,
     } = req.body;
 
     const user = await User.findById(userId);
@@ -182,20 +197,20 @@ export const createProfile = async (req, res) => {
       fitnessGoals,
       programs,
       medicalConditions,
-      dietaryRestrictions
+      dietaryRestrictions,
     };
 
     await user.save();
 
     res.status(201).json({
       message: "Profile created successfully",
-      profile: user.profile
+      profile: user.profile,
     });
   } catch (error) {
     console.error("Profile creation error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Error creating profile",
-      error: error.message 
+      error: error.message,
     });
   }
 };
@@ -230,10 +245,12 @@ export const createUserDashboard = async (req, res) => {
       targetWeight,
       height,
       calorieTarget,
-      monthlyData: [{
-        date: new Date().toISOString(),
-        weight: currentWeight
-      }]
+      monthlyData: [
+        {
+          date: new Date().toISOString(),
+          weight: currentWeight,
+        },
+      ],
     });
 
     await dashboard.save();

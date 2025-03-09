@@ -44,10 +44,7 @@ export const AuthProvider = ({ children }) => {
         password,
       });
   
-      console.log("Full Response:", response.data); // Logs entire response
-  
       const { token, user } = response.data;
-      console.log("Extracted User Data:", user); // Logs only the user object
   
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
       setUser(user);
@@ -69,8 +66,6 @@ export const AuthProvider = ({ children }) => {
         role: ROLE_MAPPINGS[role] || "User"
       });
   
-      console.log("Full API Response:", response.data);
-  
       const { token, user } = response.data;
       if (!token || !user) {
         throw new Error("Invalid response from server");
@@ -78,7 +73,6 @@ export const AuthProvider = ({ children }) => {
   
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
       setUser(user);
-      console.log("User set in state:", user);
   
       return user;
     } catch (error) {

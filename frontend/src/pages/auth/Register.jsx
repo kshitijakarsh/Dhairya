@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 
 const roles = [
   {
-    id: 'gym_owner',
+    id: 'Owner',
     title: 'Gym Owner',
     description: 'Manage your gym, track memberships, and grow your business',
     icon: (
@@ -15,7 +15,7 @@ const roles = [
     ),
   },
   {
-    id: 'gym_goer',
+    id: 'User',
     title: 'Gym Goer',
     description: 'Track your workouts, set goals, and monitor your progress',
     icon: (
@@ -25,7 +25,7 @@ const roles = [
     ),
   },
   {
-    id: 'trainer',
+    id: 'Trainer',
     title: 'Gym Trainer',
     description: 'Manage clients, create workout plans, and track progress',
     icon: (
@@ -70,7 +70,8 @@ const Register = () => {
 
     try {
       const registeredUser = await register(formData);
-      console.log(registeredUser);
+      console.log("message from registeration", registeredUser);
+      
       
       
       if (registeredUser.role === 'User') {

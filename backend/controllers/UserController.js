@@ -74,6 +74,7 @@ export const loginUser = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        dashboard : user.dashboardId
       },
     });
   } catch (error) {
@@ -160,6 +161,13 @@ export const createProfile = async (req, res) => {
     });
   }
 };
+
+export const updateProfile = async (req, res) => {
+  try{
+    const userId = req.user.id;
+    
+  }
+}
 
 
 export const getUserDashboard = async (req, res) => {

@@ -67,7 +67,6 @@ const UserDashboardSchema = new mongoose.Schema(
         },
       },
       location: { type: String },
-      // profilePicture: { type: String },
     },
 
     monthlyData: [

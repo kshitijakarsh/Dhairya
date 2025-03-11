@@ -6,6 +6,7 @@ import {
   logoutUser,
   createProfile,
   getUserDashboard,
+  updateProfile
 } from "../controllers/UserController.js";
 import { validateUser } from "../middleware/validationMiddleware.js";
 
@@ -21,5 +22,6 @@ router.get("/verify", authenticateToken, (req, res) => {
   res.json({ valid: true });
 });
 router.get('/dashboard', authenticateToken, getUserDashboard);
+router.get('/update', authenticateToken, updateProfile);
 
 export default router;

@@ -324,7 +324,6 @@ const UserDashboard = () => {
     return '--';
   };
 
-  // Weight progress chart data
   const weightChartData = {
     labels: dashboardData.monthlyData.map(data => 
       new Date(data.date).toLocaleDateString('en-US', {
@@ -364,7 +363,6 @@ const UserDashboard = () => {
     <>
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
         <div className="max-w-7xl mx-auto space-y-8">
-          {/* Header Section */}
           <Card className="p-6 bg-gradient-to-r from-slate-500 to-slate-950 text-white">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -385,8 +383,6 @@ const UserDashboard = () => {
               </div>
             </div>
           </Card>
-
-          {/* Motivation Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <MotivationCard 
               icon={Icons.Trophy}
@@ -411,8 +407,6 @@ const UserDashboard = () => {
               message={dashboardData.profile.programs?.[0] || 'No programs selected'}
             />
           </div>
-
-          {/* Stats Overview */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard 
               icon={Icons.Weight} 
@@ -442,8 +436,6 @@ const UserDashboard = () => {
               className="bg-gradient-to-br from-yellow-50 to-white"
             />
           </div>
-
-          {/* Weight Progress Chart */}
           <Card className="p-6 hover:shadow-lg transition-shadow">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <Icons.Chart />
@@ -453,8 +445,6 @@ const UserDashboard = () => {
               <Line options={chartOptions} data={weightChartData} />
             </div>
           </Card>
-
-          {/* Programs and Goals Display */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
@@ -486,8 +476,6 @@ const UserDashboard = () => {
               </div>
             </Card>
           </div>
-
-          {/* Calendar Section */}
           <Card className="p-6 hover:shadow-lg transition-shadow">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <Icons.Calendar />
@@ -504,8 +492,6 @@ const UserDashboard = () => {
               ))}
             </div>
           </Card>
-
-          {/* Additional User Details */}
           {dashboardData.userDetails && (
             <Card className="p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">

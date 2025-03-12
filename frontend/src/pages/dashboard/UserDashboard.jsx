@@ -17,6 +17,8 @@ import axios from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '../../constants';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 ChartJS.register(
   CategoryScale,
@@ -146,20 +148,20 @@ const MonthlyCalendar = ({ month, attendance, onToggle }) => {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <Card className="overflow-hidden">
-      <div className="bg-gray-50 p-4 border-b border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900">{monthNames[month]}</h3>
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+      <div className="bg-gray-50 p-3 border-b border-gray-100">
+        <h3 className="text-sm font-semibold text-gray-900">{monthNames[month].substring(0, 3)}</h3>
       </div>
-      <div className="p-4">
-        <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="p-2">
+        <div className="grid grid-cols-7 gap-1 mb-1">
           {weekDays.map(day => (
-            <div key={day} className="text-xs text-gray-500 font-medium text-center">
-              {day}
+            <div key={day} className="text-[0.6rem] text-gray-500 text-center">
+              {day[0]}
             </div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1">
-          {/* Add empty cells for proper day alignment */}
+          {/* Calendar cells with compact styling */}
           {Array.from({ length: new Date(2024, month, 1).getDay() }).map((_, i) => (
             <div key={`empty-${i}`} className="aspect-square" />
           ))}
@@ -174,10 +176,10 @@ const MonthlyCalendar = ({ month, attendance, onToggle }) => {
                 onClick={() => canToggle && onToggle(dateKey)}
                 disabled={!canToggle}
                 className={`
-                  aspect-square rounded-lg text-sm font-medium
-                  transition-all duration-200 flex items-center justify-center
+                  aspect-square rounded-sm text-xs
+                  transition-colors duration-150
                   ${canToggle ? 'hover:bg-gray-100' : 'cursor-not-allowed opacity-50'}
-                  ${attendance[dateKey] ? 'bg-green-500 text-white hover:bg-green-950' : 'bg-white'}
+                  ${attendance[dateKey] ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-50'}
                 `}
               >
                 {day}
@@ -190,332 +192,404 @@ const MonthlyCalendar = ({ month, attendance, onToggle }) => {
   );
 };
 
+const EditableStatCard = ({ icon: Icon, title, value, unit, onSave, label }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedValue, setEditedValue] = useState(value);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Reset local state when value changes
+  useEffect(() => {
+    setEditedValue(value);
+    setIsEditing(false);
+  }, [value]);
+
+  const handleSave = async () => {
+    if (editedValue === value) {
+      setIsEditing(false);
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const success = await onSave({ 
+        [label]: unit === 'kg' ? parseFloat(editedValue) : parseInt(editedValue) 
+      });
+      
+      if (success) {
+        toast.success(`${title} updated!`, { position: "bottom-right", autoClose: 2000 });
+      }
+    } catch (error) {
+      setEditedValue(value);
+      toast.error(`Update failed: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Card className={`relative transition-all ${isEditing ? 'ring-2 ring-slate-500' : ''}`}>
+      <div className="p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Icon />
+          <span className="font-medium">{title}</span>
+        </div>
+        
+        {isEditing ? (
+          <div className="flex gap-2">
+            <StyledInput
+              value={editedValue}
+              onChange={(e) => setEditedValue(e.target.value)}
+              type="number"
+              min="0"
+              step={unit === 'kg' ? '0.1' : '1'}
+              className="flex-1"
+            />
+            <button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="p-2 text-white bg-slate-500 rounded-lg hover:bg-slate-600 disabled:opacity-50"
+            >
+              {isSaving ? 'Saving...' : <Icons.Save />}
+            </button>
+          </div>
+        ) : (
+          <div 
+            className="text-3xl font-bold cursor-pointer"
+            onClick={() => setIsEditing(true)}
+          >
+            {value || '--'} {unit}
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+};
+
 const UserDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
-  // State for different data categories
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [attendance, setAttendance] = useState({});
-  
-  // Organized state variables for different data types
-  const [dashboardData, setDashboardData] = useState({
-    profile: {
-      age: '',
-      gender: '',
-      height: '',
-      fitnessGoals: [],
-      programs: []
-    },
+  const [dashboard, setDashboard] = useState({
+    profile: { age: '', gender: '', height: '', fitnessGoals: [], programs: [] },
     monthlyData: [],
-    attendance: [],
     calorieTarget: null,
     targetWeight: null,
-    userDetails: {
-      budget: '',
-      gymEnrolled: false,
-      gymName: ''
-    }
+    userDetails: { budget: '', gymEnrolled: false, gymName: '' }
   });
 
   useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  const fetchUserData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      console.log("Fetching user data from:", `${API_BASE_URL}/users/dashboard`);
-  
-      const response = await axios.get(
-        `${API_BASE_URL}/users/dashboard`,
-        {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }
-      );
-  
-      console.log("API Response:", response.data);
-
-      if (response.data && response.data.success) {
-        const dashboard = response.data.dashboard;
-        setDashboardData({
-          profile: dashboard.profile || {
-            age: '',
-            gender: '',
-            height: '',
-            fitnessGoals: [],
-            programs: []
-          },
-          monthlyData: dashboard.monthlyData || [],
-          attendance: dashboard.attendance || [],
-          calorieTarget: dashboard.calorieTarget,
-          targetWeight: dashboard.targetWeight,
-          userDetails: dashboard.userDetails || {
-            budget: '',
-            gymEnrolled: false,
-            gymName: ''
-          }
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+        const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
 
-        // Format attendance data if needed
-        const formattedAttendance = {};
-        if (dashboard.attendance && Array.isArray(dashboard.attendance)) {
-          dashboard.attendance.forEach(monthData => {
-            if (monthData.daysPresent) {
-              const monthIndex = new Date(Date.parse(`${monthData.month} 1, 2024`)).getMonth() + 1;
-              monthData.daysPresent.forEach(day => {
-                formattedAttendance[`${monthIndex}-${day}`] = true;
-              });
-            }
-          });
+        if (data?.success) {
+          setDashboard(data.dashboard);
+          setAttendance(formatAttendance(data.dashboard.attendance));
         }
-        setAttendance(formattedAttendance);
+      } catch (error) {
+        setError(error.response?.data?.message || 'Failed to load data');
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching user data:", error.response || error);
-      setError(error.response?.data?.message || 'Failed to load profile data');
-    } finally {
-      setLoading(false);
-    }
+    };
+    fetchData();
+  }, []);
+
+  const formatAttendance = (attendanceData = []) => {
+    return attendanceData.reduce((acc, { month, daysPresent = [] }) => {
+      const monthIndex = new Date(`${month} 1, 2024`).getMonth() + 1;
+      daysPresent.forEach(day => (acc[`${monthIndex}-${day}`] = true));
+      return acc;
+    }, {});
   };
 
   const handleAttendanceToggle = async (dateKey) => {
     try {
-      const [monthNum, day] = dateKey.split('-').map(num => parseInt(num));
+      const [monthNum, day] = dateKey.split('-');
       const monthName = new Date(2024, monthNum - 1).toLocaleString('default', { month: 'long' });
-
-      const response = await axios.post(
-        `${API_BASE_URL}/api/users/attendance`,
-        {
-          month: monthName,
-          day: day
-        },
-        {
-          headers: { 
-            'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)}` 
+      
+      // Use PATCH request for attendance
+      await axios.patch(
+        `${API_BASE_URL}/users/update`,
+        { 
+          attendance: {
+            month: monthName,
+            day: parseInt(day)
           }
+        },
+        { 
+          headers: { 
+            Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)}` 
+          } 
         }
       );
 
-      if (response.status === 200) {
-        setAttendance(prev => {
-          const newAttendance = { ...prev };
-          if (newAttendance[dateKey]) {
-            delete newAttendance[dateKey];
-          } else {
-            newAttendance[dateKey] = true;
-          }
-          return newAttendance;
-        });
-      }
+      setAttendance(prev => ({ ...prev, [dateKey]: !prev[dateKey] }));
+      
+      // Refresh attendance data after update
+      const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)}` }
+      });
+      setAttendance(formatAttendance(data.dashboard.attendance));
+      
+      toast.success("Attendance updated!");
     } catch (error) {
-      setError(error.response?.data?.message || 'Failed to update attendance');
+      toast.error("Failed to update attendance");
     }
+  };
+
+  const getWeightMetrics = () => {
+    // Get the most recent weight entry (last in array)
+    const latestWeightEntry = dashboard.monthlyData.slice(-1)[0];
+    const currentWeight = latestWeightEntry?.weight;
+    const targetWeight = dashboard.targetWeight;
+    const weightDifference = currentWeight && targetWeight 
+      ? Math.abs(currentWeight - targetWeight)
+      : null;
+    
+    return { currentWeight, targetWeight, weightDifference };
   };
 
   const calculateBMI = () => {
-    if (dashboardData.profile.height && dashboardData.monthlyData[0]?.weight) {
-      const heightInMeters = parseFloat(dashboardData.profile.height) / 100;
-      const currentWeight = dashboardData.monthlyData[0].weight;
-      return (currentWeight / (heightInMeters * heightInMeters)).toFixed(1);
-    }
-    return '--';
+    const { currentWeight } = getWeightMetrics();
+    const height = dashboard.profile.height;
+    return height && currentWeight 
+      ? (currentWeight / ((height/100) ** 2)).toFixed(1)
+      : '--';
   };
 
-  const weightChartData = {
-    labels: dashboardData.monthlyData.map(data => 
-      new Date(data.date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      })
-    ) || [],
-    datasets: [
-      {
-        label: 'Weight Progress',
-        data: dashboardData.monthlyData.map(data => data.weight) || [],
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-        tension: 0.3
+  const handleUpdateProfile = async (updateData) => {
+    try {
+      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      
+      // Optimistic update for weight
+      if (updateData.currentWeight) {
+        setDashboard(prev => ({
+          ...prev,
+          monthlyData: [...prev.monthlyData, {
+            weight: updateData.currentWeight,
+            date: new Date().toISOString()
+          }]
+        }));
       }
-    ]
+
+      // Optimistic update for other fields
+      setDashboard(prev => ({
+        ...prev,
+        ...updateData,
+        profile: {
+          ...prev.profile,
+          ...(updateData.height && { height: updateData.height })
+        }
+      }));
+
+      await axios.patch(
+        `${API_BASE_URL}/users/update`,
+        updateData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Verify with server
+      const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`);
+      setDashboard(data.dashboard);
+
+      return true;
+    } catch (error) {
+      // Revert on error
+      const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`);
+      setDashboard(data.dashboard);
+      
+      toast.error(error.response?.data?.message || 'Update failed');
+      return false;
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-500 mx-auto"></div>
-          <p className="mt-4 text-gray-950">Loading your dashboard...</p>
-        </div>
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-500 mx-auto"></div>
+        <p className="mt-4 text-gray-950">Loading your dashboard...</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  const currentWeight = dashboardData.monthlyData[0]?.weight;
-  const weightDifference = currentWeight && dashboardData.targetWeight 
-    ? Math.abs(currentWeight - dashboardData.targetWeight)
-    : null;
+  const { currentWeight, targetWeight, weightDifference } = getWeightMetrics();
+  const { age, gender, fitnessGoals, programs } = dashboard.profile;
+  const { budget, gymEnrolled, gymName } = dashboard.userDetails;
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <Card className="p-6 bg-gradient-to-r from-slate-500 to-slate-950 text-white">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold">
-                  Welcome back, {user?.name || 'Fitness Enthusiast'} 👋
-                </h1>
-                <p className="text-slate-100 mt-2">
-                  {dashboardData.profile.age} years • {dashboardData.profile.gender?.charAt(0).toUpperCase() + dashboardData.profile.gender?.slice(1)}
-                </p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg text-slate-50">
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header Section */}
+        <Card className="p-6 bg-gradient-to-r from-slate-500 to-slate-950 text-white">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold">Welcome back, {user?.name || 'Fitness Enthusiast'} 👋</h1>
+              <p className="text-slate-100 mt-2">
+                {age} years • {gender?.charAt(0).toUpperCase() + gender?.slice(1)}
+              </p>
             </div>
-          </Card>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MotivationCard 
-              icon={Icons.Trophy}
-              title="Weight Goal Progress"
-              message={weightDifference 
-                ? `${weightDifference.toFixed(1)}kg to reach ${dashboardData.targetWeight}kg!`
-                : 'Set your weight goals!'}
-            />
-            <MotivationCard 
-              icon={Icons.Fire}
-              title="Daily Calories"
-              message={`Target: ${dashboardData.calorieTarget?.toLocaleString() || '---'} calories`}
-            />
-            <MotivationCard 
-              icon={Icons.Goal}
-              title="Fitness Goals"
-              message={dashboardData.profile.fitnessGoals?.[0] || 'No goals set'}
-            />
-            <MotivationCard 
-              icon={Icons.Activity}
-              title="Active Programs"
-              message={dashboardData.profile.programs?.[0] || 'No programs selected'}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard 
-              icon={Icons.Weight} 
-              title="Current Weight" 
-              value={currentWeight} 
-              unit="kg"
-              className="bg-gradient-to-br from-purple-50 to-white"
-            />
-            <StatCard 
-              icon={Icons.Target} 
-              title="Target Weight" 
-              value={dashboardData.targetWeight} 
-              unit="kg"
-              className="bg-gradient-to-br from-green-50 to-white"
-            />
-            <StatCard 
-              icon={Icons.User} 
-              title="Height" 
-              value={dashboardData.profile.height}
-              unit="cm"
-              className="bg-gradient-to-br from-blue-50 to-white"
-            />
-            <StatCard 
-              icon={Icons.Chart} 
-              title="BMI" 
-              value={calculateBMI()}
-              className="bg-gradient-to-br from-yellow-50 to-white"
-            />
-          </div>
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <Icons.Chart />
-              Weight Progress Journey
-            </h2>
-            <div className="h-[400px] w-full">
-              <Line options={chartOptions} data={weightChartData} />
+            <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+              })}
             </div>
-          </Card>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                <Icons.Goal />
-                Your Fitness Goals
-              </h2>
-              <div className="space-y-2">
-                {dashboardData.profile.fitnessGoals?.map((goal, index) => (
-                  <div key={index} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
-                    <Icons.Trophy className="text-slate-500" />
-                    <span>{goal}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
+          </div>
+        </Card>
 
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                <Icons.Activity />
-                Your Training Programs
-              </h2>
-              <div className="space-y-2">
-                {dashboardData.profile.programs?.map((program, index) => (
-                  <div key={index} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
-                    <Icons.Fire className="text-slate-500" />
-                    <span>{program}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
+        {/* Key Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MotivationCard 
+            icon={Icons.Trophy}
+            title="Weight Goal Progress"
+            message={weightDifference 
+              ? `${weightDifference.toFixed(1)}kg to reach ${targetWeight}kg!`
+              : 'Set your weight goals!'}
+          />
+          <MotivationCard 
+            icon={Icons.Fire}
+            title="Daily Calories"
+            message={`Target: ${dashboard.calorieTarget?.toLocaleString() || '---'} calories`}
+          />
+          <MotivationCard 
+            icon={Icons.Goal}
+            title="Fitness Goals"
+            message={fitnessGoals?.[0] || 'No goals set'}
+          />
+          <MotivationCard 
+            icon={Icons.Activity}
+            title="Active Programs"
+            message={programs?.[0] || 'No programs selected'}
+          />
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <EditableStatCard 
+            icon={Icons.Weight}
+            title="Current Weight"
+            value={currentWeight}
+            unit="kg"
+            label="currentWeight"
+            onSave={handleUpdateProfile}
+          />
+          <EditableStatCard 
+            icon={Icons.Target}
+            title="Target Weight"
+            value={targetWeight}
+            unit="kg"
+            label="targetWeight"
+            onSave={handleUpdateProfile}
+          />
+          <EditableStatCard 
+            icon={Icons.User}
+            title="Height"
+            value={dashboard.profile.height}
+            unit="cm"
+            label="height"
+            onSave={handleUpdateProfile}
+          />
+          <StatCard 
+            icon={Icons.Chart}
+            title="BMI" 
+            value={calculateBMI()}
+          />
+        </div>
+
+        {/* Weight Progress Chart */}
+        <Card className="p-6 hover:shadow-lg transition-shadow">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <Icons.Chart />
+            Weight Progress Journey
+          </h2>
+          <div className="h-[400px] w-full">
+            <Line 
+              options={chartOptions} 
+              data={{
+                labels: dashboard.monthlyData.map(d => new Date(d.date).toLocaleDateString()),
+                datasets: [{
+                  label: 'Weight Progress',
+                  data: dashboard.monthlyData.map(d => d.weight),
+                  borderColor: 'rgb(59, 130, 246)',
+                  backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                  tension: 0.3
+                }]
+              }} 
+            />
           </div>
-          <Card className="p-6 hover:shadow-lg transition-shadow">
+        </Card>
+
+        {/* Goals and Programs */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ListSection title="Your Fitness Goals" items={fitnessGoals} icon={Icons.Trophy} />
+          <ListSection title="Your Training Programs" items={programs} icon={Icons.Activity} />
+        </div>
+
+        {/* Attendance Calendar */}
+        <Card className="p-6 hover:shadow-lg transition-shadow">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <Icons.Calendar />
+            Attendance Tracker
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 12 }, (_, i) => (
+              <MonthlyCalendar
+                key={i}
+                month={i}
+                attendance={attendance}
+                onToggle={handleAttendanceToggle}
+              />
+            ))}
+          </div>
+        </Card>
+
+        {/* User Details */}
+        {dashboard.userDetails && (
+          <Card className="p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <Icons.Calendar />
-              Attendance Tracker
+              <Icons.User />
+              Additional Details
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 12 }, (_, i) => (
-                <MonthlyCalendar
-                  key={i}
-                  month={i}
-                  attendance={attendance}
-                  onToggle={handleAttendanceToggle}
-                />
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DetailItem label="Budget Range" value={budget} />
+              {gymEnrolled && <DetailItem label="Enrolled Gym" value={gymName} />}
             </div>
           </Card>
-          {dashboardData.userDetails && (
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                <Icons.User />
-                Additional Details
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <span className="text-sm text-gray-600">Budget Range</span>
-                  <p className="text-lg font-medium">{dashboardData.userDetails.budget || '--'}</p>
-                </div>
-                {dashboardData.userDetails.gymEnrolled && (
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <span className="text-sm text-gray-600">Enrolled Gym</span>
-                    <p className="text-lg font-medium">{dashboardData.userDetails.gymName}</p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
-        </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
+
+// Extracted Components
+const ListSection = ({ title, items = [], icon: Icon }) => (
+  <Card className="p-6">
+    <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
+      <Icon />
+      {title}
+    </h2>
+    <div className="space-y-2">
+      {items.map((item, index) => (
+        <div key={index} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
+          <Icon className="text-slate-500" />
+          <span>{item}</span>
+        </div>
+      ))}
+    </div>
+  </Card>
+);
+
+const DetailItem = ({ label, value }) => (
+  <div className="p-4 bg-slate-50 rounded-lg">
+    <span className="text-sm text-gray-600">{label}</span>
+    <p className="text-lg font-medium">{value || '--'}</p>
+  </div>
+);
 
 export default UserDashboard; 

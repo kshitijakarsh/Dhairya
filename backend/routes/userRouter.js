@@ -22,6 +22,6 @@ router.get("/verify", authenticateToken, (req, res) => {
   res.json({ valid: true });
 });
 router.get('/dashboard', authenticateToken, getUserDashboard);
-router.get('/update', authenticateToken, updateProfile);
+router.patch('/update', authenticateToken, updateProfile);
 
 export default router;

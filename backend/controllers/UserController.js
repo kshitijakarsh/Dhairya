@@ -87,10 +87,8 @@ export const logoutUser = (req, res) => {
 };
 
 export const createProfile = async (req, res) => {
-  console.log(req.body); // Log incoming request data for debugging
-
   try {
-    const userId = req.user.id; // Extract userId from auth middleware
+    const userId = req.user.id;
     const {
       age,
       gender,
@@ -105,24 +103,20 @@ export const createProfile = async (req, res) => {
       budget,
     } = req.body;
 
-    // ✅ Ensure user exists before proceeding
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // ✅ Prevent duplicate dashboard creation
     if (user.dashboardId) {
       return res.status(400).json({ message: "Dashboard already exists" });
     }
 
-    // ✅ Initialize weight history with the current weight
     const weightEntry = {
       weight: parseFloat(currentWeight),
       date: new Date().toISOString(),
     };
 
-    // ✅ Create a new UserDashboard
     const dashboard = new UserDashboard({
       userId,
       profile: {
@@ -144,7 +138,6 @@ export const createProfile = async (req, res) => {
 
     await dashboard.save();
 
-    // ✅ Link dashboard to user
     user.dashboardId = dashboard._id;
     await user.save();
 
@@ -165,71 +158,63 @@ export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     const updates = req.body;
-    const user = await User.findById(userId);
+    console.log("📝 Received updates:", updates);
 
+    const user = await User.findById(userId);
     if (!user?.dashboardId) {
       return res.status(404).json({ message: "Dashboard not found" });
     }
 
     const updateOperations = {};
 
-    // Handle attendance updates
     if (updates.attendance) {
       const { month, day } = updates.attendance;
-      updateOperations.$addToSet = { 
-        "attendance.$[elem].daysPresent": day 
-      };
-      updateOperations.$set = { lastUpdated: Date.now() };
-      
-      const result = await UserDashboard.findOneAndUpdate(
-        { _id: user.dashboardId },
-        updateOperations,
-        {
-          arrayFilters: [{ "elem.month": month }],
-          new: true,
-          upsert: true // Create month entry if not exists
-        }
-      );
-      
-      return res.json({ 
-        message: "Attendance updated", 
-        dashboard: result 
-      });
+      updateOperations.$addToSet = { "attendance.$[elem].daysPresent": day };
     }
 
-    // Handle weight history updates
     if (updates.currentWeight) {
       updateOperations.$push = {
         monthlyData: {
           weight: updates.currentWeight,
-          date: new Date().toISOString()
-        }
+          date: new Date().toISOString(),
+        },
       };
     }
 
-    // Handle other profile updates
-    if (Object.keys(updates).length > 0) {
+    if (updates.userDetails) {
       updateOperations.$set = {
-        ...updates,
-        lastUpdated: Date.now()
+        ...updateOperations.$set,
+        ...Object.entries(updates.userDetails).reduce((acc, [key, value]) => {
+          acc[`userDetails.${key}`] = value;
+          return acc;
+        }, {})
       };
     }
 
-    const updatedDashboard = await UserDashboard.findByIdAndUpdate(
-      user.dashboardId,
-      updateOperations,
-      { new: true, runValidators: true }
-    );
+    updateOperations.$set = { ...updateOperations.$set, lastUpdated: Date.now() };
 
-    res.json({ message: "Dashboard updated", dashboard: updatedDashboard });
+    if (Object.keys(updateOperations).length > 0) {
+      const updatedDashboard = await UserDashboard.findByIdAndUpdate(
+        user.dashboardId,
+        updateOperations,
+        { new: true, runValidators: true }
+      );
+
+      console.log("✅ Dashboard update successful:", updatedDashboard);
+      return res.json({ message: "Dashboard updated", dashboard: updatedDashboard });
+    }
+
+    console.warn("⚠️ No valid updates provided");
+    return res.status(400).json({ message: "No valid updates provided" });
+
   } catch (error) {
-    console.error("Update error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("🔥 Update error:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
+
 export const getUserDashboard = async (req, res) => {
-  console.log('request received');
   
   try {
     const user = await User.findById(req.user.id);

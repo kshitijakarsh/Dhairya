@@ -57,15 +57,7 @@ const UserDashboardSchema = new mongoose.Schema(
     userDetails: {
       budget: { type: String },
       gymEnrolled: { type: Boolean, default: false },
-      gymName: {
-        type: String,
-        validate: {
-          validator: function (value) {
-            return this.userDetails.gymEnrolled ? !!value : true;
-          },
-          message: "Gym name is required when gymEnrolled is true",
-        },
-      },
+      gymName: { type: String, default: '' },
       location: { type: String },
     },
 

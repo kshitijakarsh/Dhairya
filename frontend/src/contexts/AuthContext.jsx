@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL, ENDPOINTS, STORAGE_KEYS, ROLE_MAPPINGS } from '../constants';
+import { API_BASE_URL, ENDPOINTS, STORAGE_KEYS } from '../constants';
 
 const AuthContext = createContext(null);
 
@@ -23,15 +23,19 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      if (token) {
-        const response = await axios.get(`${API_BASE_URL}${ENDPOINTS.VERIFY}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUser(response.data);
+      if (!token) {
+        setUser(null);
+        return setLoading(false);
       }
+
+      const response = await axios.get(`${API_BASE_URL}${ENDPOINTS.VERIFY}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setUser(response.data);
     } catch (error) {
-      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      setUser(null);
+      console.error("Auth check failed, logging out:", error.response?.data || error);
+      logout(); // Force logout on error
     } finally {
       setLoading(false);
     }
@@ -39,48 +43,39 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.LOGIN}`, {
-        email,
-        password,
-      });
-  
+      const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.LOGIN}`, { email, password });
       const { token, user } = response.data;
-  
+      
+      if (!token || !user) throw new Error("Invalid response from server");
+
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
       setUser(user);
       return user;
     } catch (error) {
       console.error("Login Error:", error.response?.data || error);
-      throw error.response?.data?.message || "Login failed";
+      throw new Error(error.response?.data?.message || "Login failed");
     }
-  };  
+  };
 
   const register = async ({ name, email, password, role }) => {
     try {
-      console.log("Registering user with:", { name, email, password, role });
-  
+      console.log("Registering user:", { name, email, password, role });
+
       const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.REGISTER}`, {
-        name,
-        email,
-        password,
-        role: ROLE_MAPPINGS[role] || "User"
+        name, email, password, role,
       });
-  
+
       const { token, user } = response.data;
-      if (!token || !user) {
-        throw new Error("Invalid response from server");
-      }
-  
+      if (!token || !user) throw new Error("Invalid response from server");
+
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
       setUser(user);
-  
       return user;
     } catch (error) {
       console.error("Registration failed:", error.response?.data || error);
-      throw error.response?.data?.message || "Registration failed";
+      throw new Error(error.response?.data?.message || "Registration failed");
     }
   };
-  
 
   const logout = () => {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
@@ -92,4 +87,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-}; 
+};

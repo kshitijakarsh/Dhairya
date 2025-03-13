@@ -4,68 +4,11 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Helper function to validate time format (HH:mm)
-const isValidTime = (time) => {
-  if (!time || typeof time !== 'string') return false;
-  const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-  return timeRegex.test(time);
-};
-
-const gymSchema = z.object({
-  name: z.string().min(3, "Gym name must be at least 3 characters"),
-  owner: z.string(),
-  address: z.object({
-    street: z.string().min(3, "Street address must be at least 3 characters"),
-    city: z.string().min(2, "City name must be at least 2 characters"),
-    state: z.string().min(2, "State name must be at least 2 characters"),
-    zip: z.string().min(4, "ZIP code must be at least 4 characters"),
-    country: z.string().min(2, "Country name must be at least 2 characters")
-  }),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  operation_hours: z.array(
-    z.object({
-      day: z.string(),
-      open: z.string().refine((time) => isValidTime(time), {
-        message: "Opening time must be in HH:mm format"
-      }),
-      close: z.string().refine((time) => isValidTime(time), {
-        message: "Closing time must be in HH:mm format"
-      })
-    })
-  ).nonempty("At least one operating hours entry is required"),
-  facilities: z.array(z.string()).nonempty("At least one facility must be selected"),
-  membership_charges: z.object({
-    monthly: z.number().positive("Monthly fee must be positive"),
-    yearly: z.number().positive("Yearly fee must be positive"),
-    family: z.number().positive("Family package fee must be positive")
-  }),
-  description: z.string().optional(),
-  ratings: z.array(
-    z.object({
-      user: z.string(),
-      rating: z.number().min(1).max(5),
-      review: z.string().optional()
-    })
-  ).optional()
-}).strict(); // This ensures no extra fields are allowed
-
 export const registerGym = async (req, res) => {
   try {
-    // Debug log the incoming request body
     console.log('Received gym registration data:', req.body);
 
-    if (req.user.role !== "Owner") {
-      return res.status(403).json({ message: "Only gym owners can register gyms" });
-    }
-
-    // Debug log the user info
-    console.log('User attempting registration:', {
-      id: req.user._id,
-      role: req.user.role
-    });
-
     try {
-      // Ensure operation_hours is properly formatted
       const formattedData = {
         ...req.body,
         owner: req.user._id.toString(),
@@ -89,30 +32,13 @@ export const registerGym = async (req, res) => {
       });
     } catch (validationError) {
       console.error('Validation error:', validationError);
-      
-      // Handle Zod validation errors
-      if (validationError.errors) {
-        return res.status(400).json({
-          type: 'ValidationError',
-          message: validationError.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message,
-            code: err.code
-          }))
-        });
-      }
-      
-      throw validationError; // Re-throw if it's not a validation error
     }
   } catch (error) {
-    console.error('Gym registration error:', error);
-    
-    // If it's already a formatted error response, send it as is
+    console.error('Gym registration error:', error)
     if (error.type === 'ValidationError') {
       return res.status(400).json(error);
     }
 
-    // Handle mongoose validation errors
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => ({
         path: err.path,

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 const roles = [
   {
@@ -50,8 +51,11 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
 
-  const handleRoleSelect = (role) => {
-    setFormData(prev => ({ ...prev, role }));
+  const handleRoleSelect = (roleId) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      role: roleId === 'Owner' ? 'Owner' : roleId 
+    }));
     setStep(2);
   };
 
@@ -69,10 +73,12 @@ const Register = () => {
     setError('');
 
     try {
-      const registeredUser = await register(formData);
-      console.log("message from registeration", registeredUser);
+      const registeredUser = await register({
+        ...formData,
+        role: formData.role
+      });
       
-      
+      console.log("Registration response:", registeredUser);
       
       if (registeredUser.role === 'User') {
         navigate('/profile/setup');
@@ -80,7 +86,7 @@ const Register = () => {
         navigate('/');
       }
     } catch (error) {
-      setError(error.message);
+      setError(error.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

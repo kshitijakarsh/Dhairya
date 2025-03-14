@@ -78,10 +78,14 @@ const GymCard = ({ gym, onEdit, onDelete }) => {
             {gym.operation_hours.map((hour, index) => (
               <div 
                 key={index}
-                className="flex items-center justify-between px-4 py-2.5 bg-gray-100 rounded-lg"
+                className="bg-gray-50 p-4 rounded-lg"
               >
-                <span className="font-medium text-gray-900">{hour.day}</span>
-                <span className="text-gray-700">{hour.open} - {hour.close}</span>
+                <div className="text-xl font-semibold text-gray-900 mb-2">
+                  {hour.day}
+                </div>
+                <div className="text-gray-600 text-lg">
+                  {hour.open} - {hour.close}
+                </div>
               </div>
             ))}
           </div>

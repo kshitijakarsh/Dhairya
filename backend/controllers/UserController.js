@@ -168,10 +168,12 @@ export const updateProfile = async (req, res) => {
     }
 
     const updateOperations = {};
+    const arrayFilters = [];
 
     if (updates.attendance) {
       const { month, day } = updates.attendance;
       updateOperations.$addToSet = { "attendance.$[elem].daysPresent": day };
+      arrayFilters.push({ "elem.month": month }); // ✅ Add array filter for correct element
     }
 
     if (updates.currentWeight) {
@@ -196,10 +198,23 @@ export const updateProfile = async (req, res) => {
     updateOperations.$set = { ...updateOperations.$set, lastUpdated: Date.now() };
 
     if (Object.keys(updateOperations).length > 0) {
+      const updateQuery = {
+        _id: user.dashboardId
+      };
+
+      const updateOptions = {
+        new: true,
+        runValidators: true,
+      };
+
+      if (arrayFilters.length > 0) {
+        updateOptions.arrayFilters = arrayFilters; // ✅ Fix: Include array filters
+      }
+
       const updatedDashboard = await UserDashboard.findByIdAndUpdate(
-        user.dashboardId,
+        updateQuery,
         updateOperations,
-        { new: true, runValidators: true }
+        updateOptions
       );
 
       console.log("✅ Dashboard update successful:", updatedDashboard);
@@ -214,6 +229,7 @@ export const updateProfile = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
 export const getUserDashboard = async (req, res) => {

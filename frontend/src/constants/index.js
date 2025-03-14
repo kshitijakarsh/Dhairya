@@ -6,14 +6,19 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
-  REGISTER_GYM: '/register-gym',
+  OWNER_DASHBOARD: '/dashboard',
+  REGISTER_GYM: '/dashboard/gym/register',
+  EDIT_GYM: '/dashboard/gym/edit',
+  USER_DASHBOARD: '/user/dashboard',
+  PROFILE_SETUP: '/profile/setup',
+  SEARCH: '/search',
+  GYM_DETAILS: '/gym',
 };
 
 // User Roles
 export const USER_ROLES = {
-  GYM_OWNER: 'gym_owner',
-  GYM_GOER: 'gym_goer',
-  TRAINER: 'trainer',
+  OWNER: 'Owner',
+  USER: 'User',
 };
 
 // Role Mappings
@@ -34,6 +39,9 @@ export const ENDPOINTS = {
   REGISTER: '/users/register',
   VERIFY: '/users/verify',
   REGISTER_GYM: '/gyms/register',
+  MY_GYMS: '/gyms/my-gyms',
+  GYM: '/gyms',
+  SEARCH_GYMS: '/gyms/search',
 };
 
 // Validation Constants
@@ -44,6 +52,6 @@ export const VALIDATION = {
 
 // Feature Flags
 export const FEATURES = {
-  ENABLE_SEARCH: false,
+  ENABLE_SEARCH: true,
   ENABLE_NOTIFICATIONS: false,
 }; 

@@ -11,6 +11,9 @@ import GymDetails from './pages/GymDetails';
 import UserProfileForm from './pages/dashboard/UserProfileForm';
 import UserDashboard from './pages/dashboard/UserDashboard';
 import ProfileGuard from './components/guards/ProfileGuard';
+import OwnerGuard from './components/guards/OwnerGuard';
+import GymOwnerDashboard from './pages/dashboard/GymOwnerDashboard';
+import GymEdit from './pages/dashboard/GymEdit';
 
 function App() {
   const { user, loading } = useAuth();
@@ -34,21 +37,24 @@ function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/gym/:id" element={<GymDetails />} />
           
-          {/* Protected Routes */}
-          <Route 
-            path="register-gym" 
-            element={
-              user ? (
-                user.role === 'Owner' ? (
-                  <GymRegistration />
-                ) : (
-                  <Navigate to="/" replace />
-                )
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            } 
-          />
+          {/* Owner Protected Routes */}
+          <Route path="/dashboard" element={
+            <OwnerGuard>
+              <GymOwnerDashboard />
+            </OwnerGuard>
+          } />
+          
+          <Route path="/dashboard/gym/register" element={
+            <OwnerGuard>
+              <GymRegistration />
+            </OwnerGuard>
+          } />
+          
+          <Route path="/dashboard/gym/edit/:id" element={
+            <OwnerGuard>
+              <GymEdit />
+            </OwnerGuard>
+          } />
           
           <Route 
             path="/profile/setup" 
@@ -61,7 +67,7 @@ function App() {
             } 
           />
           <Route 
-            path="/dashboard" 
+            path="/user/dashboard" 
             element={
               user ? 
                 user.role === 'User' ? 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
@@ -7,12 +7,14 @@ import { API_BASE_URL, STORAGE_KEYS } from '../../constants';
 import { FaDumbbell, FaPlus, FaTrash } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 
-const GymRegistration = () => {
+const GymEdit = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const { state } = useLocation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(state?.gym || {
     name: '',
     owner: user?.id || '',
     address: { street: '', city: '', state: '', zip: '', country: 'India' },
@@ -30,6 +32,32 @@ const GymRegistration = () => {
   ];
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+  useEffect(() => {
+    if (!state?.gym) {
+      fetchGymDetails();
+    }
+  }, [id]);
+
+  const fetchGymDetails = async () => {
+    try {
+      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      if (!token) throw new Error('Please login to edit gym');
+
+      const response = await axios.get(
+        `${API_BASE_URL}/gyms/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        setFormData(response.data.data);
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Failed to fetch gym details";
+      toast.error(errorMessage);
+      navigate('/dashboard');
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -100,7 +128,6 @@ const GymRegistration = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -112,7 +139,6 @@ const GymRegistration = () => {
       ...prev,
       address: { ...prev.address, [name]: value }
     }));
-    // Clear error when user starts typing
     if (errors[`address.${name}`]) {
       setErrors(prev => ({ ...prev, [`address.${name}`]: '' }));
     }
@@ -173,7 +199,7 @@ const GymRegistration = () => {
 
     try {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      if (!token) throw new Error('Please login to register a gym.');
+      if (!token) throw new Error('Please login to update gym');
 
       const headers = { Authorization: `Bearer ${token}` };
 
@@ -186,21 +212,20 @@ const GymRegistration = () => {
         }
       };
 
-      const response = await axios.post(
-        `${API_BASE_URL}/gyms/register`,
+      const response = await axios.put(
+        `${API_BASE_URL}/gyms/${id}`,
         payload,
         { headers }
       );
 
       if (response.data.success) {
-        toast.success('Gym registered successfully!');
+        toast.success('Gym updated successfully!');
         navigate('/dashboard');
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
+      const errorMessage = error.response?.data?.message || "Update failed. Please try again.";
       toast.error(errorMessage);
       
-      // Handle validation errors from backend
       if (error.response?.data?.errors) {
         const backendErrors = {};
         error.response.data.errors.forEach(err => {
@@ -225,8 +250,8 @@ const GymRegistration = () => {
             <div className="absolute inset-0 bg-black opacity-50"></div>
             <div className="relative h-full flex flex-col items-center justify-center text-center px-4">
               <FaDumbbell className="text-white text-5xl mb-4" />
-              <h2 className="text-3xl font-bold text-white">Register Your Gym</h2>
-              <p className="mt-2 text-gray-200">Provide details to list your gym</p>
+              <h2 className="text-3xl font-bold text-white">Edit Gym Details</h2>
+              <p className="mt-2 text-gray-200">Update your gym information</p>
             </div>
           </div>
 
@@ -409,13 +434,22 @@ const GymRegistration = () => {
                 ))}
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Registering...' : 'Register Gym'}
-              </button>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-900 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Updating...' : 'Update Gym'}
+                </button>
+              </div>
             </form>
           </div>
         </motion.div>
@@ -424,4 +458,4 @@ const GymRegistration = () => {
   );
 };
 
-export default GymRegistration;
+export default GymEdit; 

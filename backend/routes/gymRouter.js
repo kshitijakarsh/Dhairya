@@ -1,7 +1,7 @@
 import express from "express"
-import { registerGym, getMyGyms, updateGym, getGymById, searchGyms } from '../controllers/GymController.js';
+import { registerGym, getMyGyms, updateGym, getGymById, searchGyms, addRating, deleteGym } from '../controllers/GymController.js';
 import { authenticateOwner, authenticateToken } from '../middleware/authMiddleware.js';
-import { validateGym } from "../middleware/validationMiddleware.js";
+import { validateGym, validateGymUpdate } from "../middleware/validationMiddleware.js";
 
 // Debug log to confirm route registration
 console.log('Registering gym routes...');
@@ -13,10 +13,16 @@ const router = express.Router();
 router.get('/search', searchGyms);
 router.get('/view/:id', getGymById);
 
-// Protected routes
+// Protected routes - require authentication
+router.use(authenticateToken);
+
+// Owner-specific routes
 router.post('/register', authenticateOwner, validateGym, registerGym);
 router.get('/my-gyms', authenticateOwner, getMyGyms);
-router.put('/:id', authenticateOwner, updateGym);
-router.get('/:id', authenticateOwner, getGymById);
+router.put('/:id', authenticateOwner, validateGymUpdate, updateGym);
+router.delete('/:id', authenticateOwner, deleteGym);
+
+// User routes
+router.post('/:id/rate', addRating);
 
 export default router;

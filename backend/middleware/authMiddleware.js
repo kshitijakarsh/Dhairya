@@ -12,12 +12,12 @@ export const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-    const user = await Users.findById(decoded.id).select("-password"); // Fetch full user data
+    const user = await Users.findById(decoded.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    req.user = user;  // Attach full user object
+    req.user = user;
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);

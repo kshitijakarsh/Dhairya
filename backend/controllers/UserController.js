@@ -173,7 +173,7 @@ export const updateProfile = async (req, res) => {
     if (updates.attendance) {
       const { month, day } = updates.attendance;
       updateOperations.$addToSet = { "attendance.$[elem].daysPresent": day };
-      arrayFilters.push({ "elem.month": month }); // ✅ Add array filter for correct element
+      arrayFilters.push({ "elem.month": month });
     }
 
     if (updates.currentWeight) {
@@ -208,7 +208,7 @@ export const updateProfile = async (req, res) => {
       };
 
       if (arrayFilters.length > 0) {
-        updateOptions.arrayFilters = arrayFilters; // ✅ Fix: Include array filters
+        updateOptions.arrayFilters = arrayFilters;
       }
 
       const updatedDashboard = await UserDashboard.findByIdAndUpdate(

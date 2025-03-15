@@ -120,7 +120,6 @@ export const addRating = async (req, res) => {
       });
     }
 
-    // Check if user has already rated
     const existingRating = gym.ratings.find(
       r => r.user.toString() === req.user._id.toString()
     );
@@ -156,7 +155,7 @@ export const searchGyms = async (req, res) => {
     if (!query || query.trim() === '') {
       const allGyms = await Gyms.find({})
         .select('name address facilities membership_charges')
-        .sort({ created_at: -1 })  // Show newest first
+        .sort({ created_at: -1 })
         .limit(20)
         .lean();
       return res.json(allGyms);
@@ -175,11 +174,10 @@ export const searchGyms = async (req, res) => {
       ]
     })
     .select('name address facilities membership_charges')
-    .sort({ created_at: -1 })  // Show newest first
+    .sort({ created_at: -1 }) 
     .limit(50)
     .lean();
 
-    // If no exact matches found, try fuzzy search
     if (gyms.length === 0) {
       const fuzzyResults = await Gyms.find({
         $or: [
@@ -189,7 +187,7 @@ export const searchGyms = async (req, res) => {
         ]
       })
       .select('name address facilities membership_charges')
-      .sort({ created_at: -1 })  // Show newest first
+      .sort({ created_at: -1 }) 
       .limit(20)
       .lean();
       

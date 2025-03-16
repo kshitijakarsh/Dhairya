@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL, STORAGE_KEYS } from "../constants";
 import {
@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { motion } from "framer-motion";
+import { toast } from 'react-hot-toast';
 
 const GymDetails = () => {
   const { id } = useParams();
@@ -21,6 +22,9 @@ const GymDetails = () => {
   const [error, setError] = useState("");
   const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrollmentLoading, setEnrollmentLoading] = useState(false);
+  const navigate = useNavigate();
 
   const images = [
     "https://images.unsplash.com/photo-1534438327276-14e5300c3a48",
@@ -40,10 +44,27 @@ const GymDetails = () => {
   useEffect(() => {
     const fetchGymDetails = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/gyms/view/${id}`);
-        setGym(response.data);
+        const [gymResponse, userResponse] = await Promise.all([
+          axios.get(`${API_BASE_URL}/gyms/view/${id}`),
+          user ? axios.get(
+            `${API_BASE_URL}/users/dashboard`, 
+            { 
+              headers: { 
+                Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)}` 
+              } 
+            }
+          ) : Promise.resolve(null)
+        ]);
+
+        setGym(gymResponse.data);
+
+        // Check if user is enrolled in this gym
+        if (userResponse && userResponse.data) {
+          const userEnrollments = userResponse.data.enrolledGyms || [];
+          setIsEnrolled(userEnrollments.some(enrollment => enrollment.gym === id));
+        }
       } catch (error) {
-        console.error("Error fetching gym details:", error);
+        console.error("Error fetching details:", error);
         setError("Failed to load gym details. Please try again later.");
       } finally {
         setLoading(false);
@@ -51,7 +72,7 @@ const GymDetails = () => {
     };
 
     fetchGymDetails();
-  }, [id]);
+  }, [id, user]);
 
   if (loading) {
     return (
@@ -74,9 +95,13 @@ const GymDetails = () => {
 
   if (!gym) return null;
 
-  const handleClick = async () => {
-    localStorage.setItem("isEnrolling", "true");
+  const handleEnrollment = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
 
+    setEnrollmentLoading(true);
     try {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       const response = await axios.patch(
@@ -84,23 +109,22 @@ const GymDetails = () => {
         {
           userDetails: {
             gymEnrolled: true,
-            gymName: gym.name,
+            gymId: id,
+            gymName: gym.name
           }
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log(response.data);
-      console.log(response.status);
-
-      if (response.status === 200) {
-        localStorage.setItem("isEnrolled", "true");
-        document.getElementById("enrollButton").innerText = "Enrolled";
+      if (response.data.success) {
+        setIsEnrolled(true);
+        toast.success('Successfully enrolled in the gym!');
       }
     } catch (error) {
-      console.error("Error enrolling user:", error);
+      const errorMessage = error.response?.data?.message || 'Failed to enroll. Please try again.';
+      toast.error(errorMessage);
     } finally {
-      localStorage.removeItem("isEnrolling"); // Remove loading state
+      setEnrollmentLoading(false);
     }
   };
 
@@ -337,33 +361,36 @@ const GymDetails = () => {
                   </motion.div>
                 ))}
               </div>
+
               {!user ? (
                 <Link
                   to="/login"
                   className="w-full mt-6 py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-all font-medium text-center block hover:scale-[1.02] text-base"
                 >
-                  Login to Book
+                  Login to Enroll
                 </Link>
+              ) : isEnrolled ? (
+                <button
+                  className="w-full mt-6 py-3 bg-green-500 text-white rounded-lg font-medium text-base cursor-default"
+                  disabled
+                >
+                  Already Enrolled
+                </button>
               ) : (
                 <motion.button
-                  id="enrollButton"
-                  onClick={handleClick}
+                  onClick={handleEnrollment}
                   whileHover={{ scale: 1.02 }}
-                  className={`w-full mt-6 py-3 rounded-lg transition-all font-medium text-base ${
-                    localStorage.getItem("isEnrolled") === "true"
-                      ? "bg-green-500 text-white cursor-default"
-                      : "bg-black text-white hover:bg-gray-900"
-                  }`}
-                  disabled={
-                    localStorage.getItem("isEnrolling") === "true" ||
-                    localStorage.getItem("isEnrolled") === "true"
-                  }
+                  disabled={enrollmentLoading}
+                  className="w-full mt-6 py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-all font-medium text-base disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {localStorage.getItem("isEnrolling") === "true"
-                    ? "Enrolling..."
-                    : localStorage.getItem("isEnrolled") === "true"
-                    ? "Enrolled"
-                    : "Enroll Now"}
+                  {enrollmentLoading ? (
+                    <span className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Enrolling...
+                    </span>
+                  ) : (
+                    "Enroll Now"
+                  )}
                 </motion.button>
               )}
             </section>

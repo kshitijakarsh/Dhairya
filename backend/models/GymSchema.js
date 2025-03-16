@@ -58,8 +58,8 @@ const GymSchema = new Schema(
     facilities: { type: [String], required: true },
     membership_charges: {
       monthly: { type: Number, required: true, min: 0 },
+      half_yearly: { type: Number, required: true, min: 0 },
       yearly: { type: Number, required: true, min: 0 },
-      family: { type: Number, required: true, min: 0 },
     },
     ratings: [
       {

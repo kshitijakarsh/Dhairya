@@ -310,13 +310,13 @@ const GymDetails = () => {
                     desc: "Pay month-to-month",
                   },
                   {
-                    type: "Yearly",
-                    price: gym.membership_charges.yearly,
+                    type: "Half Yearly",
+                    price: gym.membership_charges.half_yearly,
                     desc: "Save up to 20%",
                   },
                   {
-                    type: "Family Plan",
-                    price: gym.membership_charges.family,
+                    type: "Yearly",
+                    price: gym.membership_charges.yearly,
                     desc: "Up to 4 members",
                   },
                 ].map((plan, index) => (

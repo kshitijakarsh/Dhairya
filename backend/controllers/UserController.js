@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import UserDashboard from "../models/UserDashboard.js";
-import mongoose from "mongoose";
+import Membership from "../models/MembershipSchema.js";
 
 dotenv.config();
 
@@ -230,8 +230,6 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-
-
 export const getUserDashboard = async (req, res) => {
   
   try {
@@ -254,6 +252,29 @@ export const getUserDashboard = async (req, res) => {
     res.status(500).json({ message: "Error fetching dashboard", error: error.message });
   }
 };
+
+export const getUserEnrollments = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).populate({
+      path: "memberships",
+      populate: {
+        path: "gym",
+        model: "Gym",
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ enrolledGyms: user.enrolledMemberships });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 
 export default {
   registerUser,

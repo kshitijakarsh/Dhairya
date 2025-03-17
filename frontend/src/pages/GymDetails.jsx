@@ -58,7 +58,6 @@ const GymDetails = () => {
 
         setGym(gymResponse.data);
 
-        // Check if user is enrolled in this gym
         if (userResponse && userResponse.data) {
           const userEnrollments = userResponse.data.enrolledGyms || [];
           setIsEnrolled(userEnrollments.some(enrollment => enrollment.gym === id));
@@ -95,37 +94,29 @@ const GymDetails = () => {
 
   if (!gym) return null;
 
-  const handleEnrollment = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    setEnrollmentLoading(true);
-    try {
-      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      const response = await axios.patch(
-        `${API_BASE_URL}/users/update`,
-        {
-          userDetails: {
-            gymEnrolled: true,
-            gymId: id,
-            gymName: gym.name
-          }
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        setIsEnrolled(true);
-        toast.success('Successfully enrolled in the gym!');
-      }
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to enroll. Please try again.';
-      toast.error(errorMessage);
-    } finally {
-      setEnrollmentLoading(false);
-    }
+  const handleEnrollment = () => {
+    navigate(`/enroll/${id}`, { 
+      state: { 
+        gym: gym,
+        plans: [
+          {
+            type: "Monthly",
+            price: gym.membership_charges.monthly,
+            desc: "Pay month-to-month",
+          },
+          {
+            type: "Half Yearly",
+            price: gym.membership_charges.half_yearly,
+            desc: "Save up to 20%",
+          },
+          {
+            type: "Yearly",
+            price: gym.membership_charges.yearly,
+            desc: "Up to 4 members",
+          },
+        ]
+      } 
+    });
   };
 
   return (
@@ -135,9 +126,7 @@ const GymDetails = () => {
       transition={{ duration: 0.5 }}
       className="min-h-screen bg-gray-50"
     >
-      {/* Hero Section with Carousel */}
       <div className="relative h-[400px] overflow-hidden">
-        {/* Image Carousel */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

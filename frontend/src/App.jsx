@@ -14,6 +14,7 @@ import ProfileGuard from './components/guards/ProfileGuard';
 import OwnerGuard from './components/guards/OwnerGuard';
 import GymOwnerDashboard from './pages/dashboard/GymOwnerDashboard';
 import GymEdit from './pages/dashboard/GymEdit';
+import EnrollmentForm from './pages/EnrollmentForm';
 
 function App() {
   const { user, loading } = useAuth();
@@ -73,6 +74,20 @@ function App() {
                 user.role === 'User' ? 
                   <ProfileGuard>
                     <UserDashboard />
+                  </ProfileGuard> 
+                  : <Navigate to="/" replace />
+                : <Navigate to="/login" replace />
+            } 
+          />
+          
+          {/* Add the Enrollment Form Route */}
+          <Route 
+            path="/enroll/:gymId" 
+            element={
+              user ? 
+                user.role === 'User' ? 
+                  <ProfileGuard>
+                    <EnrollmentForm />
                   </ProfileGuard> 
                   : <Navigate to="/" replace />
                 : <Navigate to="/login" replace />

@@ -8,7 +8,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 const EnrollmentForm = () => {
-  const { id: gymId } = useParams();
+  const { gymId } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -16,6 +16,12 @@ const EnrollmentForm = () => {
 
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  if (!gymId) {
+    console.error('🚨 Missing gymId parameter');
+    navigate('/search');
+    return null;
+  }
 
   if (!gym || !plans) {
     navigate('/search');
@@ -42,13 +48,28 @@ const EnrollmentForm = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      
+      // Date calculation
+      const today = new Date();
+      const endDate = new Date(today);
+      switch(selectedPlan) {
+        case 'Monthly': endDate.setMonth(endDate.getMonth() + 1); break;
+        case 'Half Yearly': endDate.setMonth(endDate.getMonth() + 6); break;
+        case 'Yearly': endDate.setFullYear(endDate.getFullYear() + 1); break;
+      }
+
+      // Request payload
+      const requestData = {
+        gymId: gymId, // Directly from URL params
+        membershipType: selectedPlan.toLowerCase(),
+        endDate: endDate.toISOString().split('T')[0]
+      };
+
+      console.log('📤 Enrollment Request:', requestData);
+
       const response = await axios.post(
         `${API_BASE_URL}/memberships/enroll`,
-        {
-          gymId: gymId,
-          membershipType: selectedPlan,
-          endDate: calculateEndDate(selectedPlan).toISOString()
-        },
+        requestData,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -58,9 +79,10 @@ const EnrollmentForm = () => {
       );
 
       if (response.data.success) {
-        toast.success(response.data.message || 'Successfully enrolled!');
+        toast.success('Successfully enrolled!');
         navigate(`/user/dashboard`);
       }
+
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Enrollment failed';
       toast.error(errorMessage);

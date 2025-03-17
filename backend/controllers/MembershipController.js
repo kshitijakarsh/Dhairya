@@ -4,15 +4,24 @@ import Gym from "../models/GymSchema.js";
 
 export const enrollUserToGym = async (req, res) => {
   try {
+    // Add null checks for req.user first
+    if (!req.user) {
+      console.error("🚫 No user found in request");
+      return res.status(401).json({
+        success: false,
+        message: "Not authenticated"
+      });
+    }
+
     const user = req.user;
     const { gymId, membershipType, endDate } = req.body;
 
-    // Add role validation check
+    // Then check role
     if (user.role !== 'User') {
-      console.log(`⛔ Role violation attempt by ${user._id} (${user.role})`);
+      console.log(`⛔ Role violation: ${user._id} (${user.role || 'no-role'})`);
       return res.status(403).json({
         success: false,
-        message: "Only regular users can enroll in gym memberships"
+        message: "Only regular users can enroll"
       });
     }
 

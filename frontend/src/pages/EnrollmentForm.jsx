@@ -43,7 +43,7 @@ const EnrollmentForm = () => {
     try {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       const response = await axios.post(
-        `${API_BASE_URL}/api/memberships/enroll`,
+        `${API_BASE_URL}/memberships/enroll`,
         {
           gymId: gymId,
           membershipType: selectedPlan,

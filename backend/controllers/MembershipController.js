@@ -4,44 +4,75 @@ import Gym from "../models/GymSchema.js";
 
 export const enrollUserToGym = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const user = req.user;
     const { gymId, membershipType, endDate } = req.body;
 
-    console.log("🔍 Fetching user with ID:", userId);
-    const user = await Users.findById(userId);
-
-    if (!user) {
-      console.warn("❌ User not found");
-      return res.status(404).json({ message: "User not found" });
+    // Add role validation check
+    if (user.role !== 'User') {
+      console.log(`⛔ Role violation attempt by ${user._id} (${user.role})`);
+      return res.status(403).json({
+        success: false,
+        message: "Only regular users can enroll in gym memberships"
+      });
     }
 
-    if (user.role !== "User") {
-      console.warn("⛔ Unauthorized: Only users can enroll in a gym");
-      return res.status(403).json({ message: "Only users can enroll in a gym" });
+    // Validate request body
+    if (!gymId || !membershipType || !endDate) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Missing required fields" 
+      });
     }
 
-    console.log("📌 Checking existing membership...");
-    const existingMembership = await Membership.findOne({ user: userId, gym: gymId, status: "Active" });
+    const gym = await Gym.findById(gymId);
+    if (!gym) {
+      return res.status(404).json({ message: "Gym not found" });
+    }
+
+    // Check existing membership using correct field names
+    const existingMembership = await Membership.findOne({ 
+      user: user._id, 
+      gym: gymId,
+      status: "Active"
+    });
 
     if (existingMembership) {
-      console.warn("⚠️ User is already enrolled in this gym");
-      return res.status(400).json({ message: "User is already enrolled in this gym" });
+      return res.status(400).json({ 
+        message: `You already have an active ${existingMembership.membershipType} membership`
+      });
     }
 
-    console.log("🆕 Creating new membership...");
-    const newMembership = new Membership({ user: userId, gym: gymId, membershipType, endDate });
+    const newMembership = new Membership({
+      user: user._id,
+      gym: gymId,
+      membershipType: membershipType.toLowerCase(),
+      endDate: new Date(endDate)
+    });
+
     await newMembership.save();
 
-    console.log("🔄 Updating user and gym references...");
-    await Users.findByIdAndUpdate(userId, { $push: { enrolledMemberships: newMembership._id } });
-    await Gym.findByIdAndUpdate(gymId, { $push: { memberships: newMembership._id } });
+    // Update references using correct field names
+    await Users.findByIdAndUpdate(user._id, { 
+      $push: { enrolledMemberships: newMembership._id },
+      $set: { selectedGym: gymId } 
+    });
+    
+    await Gym.findByIdAndUpdate(gymId, { 
+      $push: { members: user._id, memberships: newMembership._id } 
+    });
 
-    console.log("✅ Enrollment successful:", newMembership);
-    return res.status(201).json({ message: "User enrolled successfully!", membership: newMembership });
+    res.status(201).json({
+      success: true,
+      message: "Enrollment successful!",
+      membership: newMembership
+    });
 
   } catch (error) {
-    console.error("🔥 Enrollment error:", error);
-    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    console.error("Enrollment error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Enrollment failed"
+    });
   }
 };
 

@@ -43,24 +43,31 @@ const EnrollmentForm = () => {
     try {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       const response = await axios.post(
-        `${API_BASE_URL}/memberships/enroll`,
+        `${API_BASE_URL}/api/memberships/enroll`,
         {
-          userId: user._id,
           gymId: gymId,
-          membershipType: selectedPlan.toLowerCase(),
-          endDate: calculateEndDate(selectedPlan)
+          membershipType: selectedPlan,
+          endDate: calculateEndDate(selectedPlan).toISOString()
         },
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json" 
+          }
         }
       );
 
       if (response.data.success) {
-        toast.success('Successfully enrolled!');
-        navigate(`/gym/${gymId}`);
+        toast.success(response.data.message || 'Successfully enrolled!');
+        navigate(`/user/dashboard`);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Enrollment failed');
+      const errorMessage = error.response?.data?.message || 'Enrollment failed';
+      toast.error(errorMessage);
+      
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -68,101 +75,106 @@ const EnrollmentForm = () => {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8"
     >
-      <div className="max-w-3xl mx-auto">
-        <motion.div 
-          initial={{ scale: 0.95 }}
-          animate={{ scale: 1 }}
-          className="bg-white rounded-xl shadow-lg overflow-hidden"
-        >
+      <div className="max-w-md mx-auto">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {/* Header */}
-          <div className="px-6 py-8 bg-black text-white text-center">
-            <motion.h2 
-              initial={{ y: -20 }}
-              animate={{ y: 0 }}
-              className="text-2xl font-bold"
-            >
-              Join {gym.name}
-            </motion.h2>
-            <p className="mt-2 text-gray-300">Select your membership plan</p>
+          <div className="px-4 py-6 border-b border-gray-200 text-center">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {gym.name} Membership
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">Select your plan</p>
           </div>
 
           {/* Content */}
-          <div className="p-8 space-y-8">
+          <div className="p-4 space-y-6">
             {/* Plan Selection */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="space-y-3">
               {plans.map((plan) => (
-                <motion.button
+                <button
                   key={plan.type}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedPlan(plan.type)}
-                  className={`p-6 rounded-xl border-2 transition-all duration-200 ${
-                    selectedPlan === plan.type
-                      ? 'border-black bg-black text-white'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`w-full p-4 text-left rounded-md transition-all
+                    ${
+                      selectedPlan === plan.type
+                        ? 'bg-gray-100 border-2 border-gray-300'
+                        : 'border border-gray-200 hover:border-gray-300'
+                    }`}
                 >
-                  <div className="space-y-4">
-                    <div className="text-lg font-semibold">{plan.type}</div>
-                    <div className="text-3xl font-bold">₹{plan.price}</div>
-                    <div className={`text-sm ${selectedPlan === plan.type ? 'text-gray-300' : 'text-gray-500'}`}>
-                      {plan.desc}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-medium text-gray-900">{plan.type}</div>
+                      <div className="text-sm text-gray-500 mt-1">{plan.desc}</div>
+                    </div>
+                    <div className="text-lg font-semibold text-gray-800">
+                      ₹{plan.price}
                     </div>
                   </div>
-                </motion.button>
+                </button>
               ))}
             </div>
 
-            {/* Submit Button */}
-            <motion.div 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="pt-6"
-            >
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !selectedPlan}
-                className={`
-                  w-full py-4 px-6 rounded-xl font-semibold text-lg
-                  transition-all duration-200
-                  ${selectedPlan 
-                    ? 'bg-black text-white hover:bg-gray-900' 
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
-                `}
+            {/* Payment Gateway Scaffolding */}
+            {/* {selectedPlan && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="pt-4 border-t border-gray-100"
               >
-                {loading ? (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center justify-center space-x-2"
-                  >
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Processing...</span>
-                  </motion.div>
-                ) : (
-                  selectedPlan 
-                    ? `Confirm ${selectedPlan} Plan` 
-                    : 'Select a Plan to Continue'
-                )}
-              </button>
-            </motion.div>
+                <h3 className="text-sm font-medium text-gray-700 mb-3">
+                  Payment Details
+                </h3>
+                
+                // Payment form elements can be added here later
+                <div className="h-32 bg-gray-50 rounded-md border-2 border-dashed border-gray-200 flex items-center justify-center">
+                  <span className="text-gray-400 text-sm">
+                    Payment gateway integration
+                  </span>
+                </div>
+              </motion.div>
+            )} */}
 
-            {/* Back Button */}
+            {/* Submit Button */}
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !selectedPlan}
+              className={`
+                w-full py-3 px-4 rounded-md font-medium text-white
+                transition-colors
+                ${selectedPlan 
+                  ? 'bg-gray-900 hover:bg-gray-800' 
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
+              `}
+            >
+              {loading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Processing Enrollment...</span>
+                </div>
+              ) : (
+                selectedPlan 
+                  ? `Enroll in ${selectedPlan} Plan` 
+                  : 'Select a Plan'
+              )}
+            </button>
+
+            {/* Back Link */}
             <div className="text-center">
               <button
                 onClick={() => navigate(`/gym/${gymId}`)}
-                className="text-gray-500 hover:text-gray-700 font-medium"
+                className="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center gap-1"
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
                 Return to Gym Details
               </button>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   );

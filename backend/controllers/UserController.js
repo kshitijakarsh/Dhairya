@@ -256,6 +256,7 @@ export const getUserDashboard = async (req, res) => {
       success: true,
       message: "Dashboard retrieved successfully",
       dashboard,
+      profileImage: user.profileImage
     });
   } catch (error) {
     console.error("Error fetching dashboard:", error);

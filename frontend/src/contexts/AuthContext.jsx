@@ -32,7 +32,10 @@ export const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setUser(response.data);
+      setUser({
+        ...response.data,
+        profileImage: response.data.profileImage || null
+      });
     } catch (error) {
       console.error("Auth check failed, logging out:", error.response?.data || error);
       logout(); // Force logout on error

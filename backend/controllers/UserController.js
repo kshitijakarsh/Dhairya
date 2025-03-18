@@ -1,4 +1,5 @@
 import User from "../models/UserSchema.js";
+import cloudinary from '../utils/cloudinary.js';
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
@@ -9,7 +10,7 @@ dotenv.config();
 
 export const registerUser = async (req, res) => {
   console.log(req.body);
-  
+
   try {
     const { email, password, name, role } = req.body;
     const existingUser = await User.findOne({ email });
@@ -18,11 +19,22 @@ export const registerUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    let profileImage = null;
+    if (req.file) {
+      const uploadedImage = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'profile_pics',
+      });
+      profileImage = uploadedImage.secure_url;
+      console.log("✅ Profile Image Uploaded:", profileImage);
+    }
+
     const user = new User({
       email,
       password: hashedPassword,
       name,
       role,
+      profileImage,
     });
 
     const token = jwt.sign(
@@ -39,15 +51,17 @@ export const registerUser = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        profileImage: user.profileImage,
       },
       message: "User registered successfully",
     });
-    
+
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("❌ Registration error:", error);
     res.status(500).json({ message: "Error registering user" });
   }
 };
+
 
 export const loginUser = async (req, res) => {
   try {

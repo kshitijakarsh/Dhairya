@@ -8,12 +8,13 @@ import {
   getUserDashboard,
   updateProfile
 } from "../controllers/UserController.js";
+import upload from "../middleware/upload.js";
 import { validateUser } from "../middleware/validationMiddleware.js";
 
 const router = express.Router();
 
-// Public routes
-router.post("/register", validateUser, registerUser);
+
+router.post("/register", upload.single('profileImage'), validateUser, registerUser);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 

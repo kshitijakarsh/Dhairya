@@ -23,6 +23,7 @@ const UserSchema = new mongoose.Schema(
       enum: ["Owner", "Trainer", "User"],
       required: true,
     },
+    profileImage: { type: String },
 
     memberships: [{ type: mongoose.Schema.Types.ObjectId, ref: "Membership" }],
 

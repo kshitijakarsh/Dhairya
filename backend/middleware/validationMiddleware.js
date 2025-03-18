@@ -28,7 +28,13 @@ const gymSchema = z.object({
   owner: z.string().min(1, 'Owner ID is required'),
   address: addressSchema,
   phone: z.string().regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number'),
-  operation_hours: z.array(operationHourSchema)
+  operation_hours: z.array(
+    z.object({
+      day: z.string(),
+      open: z.string(),
+      close: z.string(),
+    })
+  )
     .min(1, 'At least one operation hour is required')
     .refine(hours => {
       const days = hours.map(h => h.day);
@@ -37,15 +43,24 @@ const gymSchema = z.object({
   facilities: z.array(z.string()).min(1, 'At least one facility is required'),
   membership_charges: z.object({
     monthly: z.number().min(0, 'Monthly charges cannot be negative'),
-    yearly: z.number().min(0, 'Yearly charges cannot be negative'),
-    family: z.number().min(0, 'Family charges cannot be negative')
+    half_yearly: z.number().min(0, 'Yearly charges cannot be negative'),
+    yearly: z.number().min(0, 'Family charges cannot be negative'),
   }),
-  description: z.string().min(20, 'Description must be at least 20 characters').optional()
+  description: z.string().min(20, 'Description must be at least 20 characters').optional(),
 });
 
 export const validateGym = async (req, res, next) => {
   try {
+    // 🔹 Convert string fields (from form-data) to JSON
+    if (req.body.address) req.body.address = JSON.parse(req.body.address);
+    if (req.body.operation_hours) req.body.operation_hours = JSON.parse(req.body.operation_hours);
+    if (req.body.facilities) req.body.facilities = JSON.parse(req.body.facilities);
+    if (req.body.membership_charges) req.body.membership_charges = JSON.parse(req.body.membership_charges);
+
+    // 🔹 Validate using Zod
     const validatedData = await gymSchema.parseAsync(req.body);
+
+    // Attach validated data to request
     req.validatedGym = validatedData;
     next();
   } catch (error) {
@@ -54,13 +69,14 @@ export const validateGym = async (req, res, next) => {
         message: 'Validation failed',
         errors: error.errors.map(err => ({
           field: err.path.join('.'),
-          message: err.message
-        }))
+          message: err.message,
+        })),
       });
     }
     next(error);
   }
 };
+
 
 export const validateGymUpdate = async (req, res, next) => {
   try {

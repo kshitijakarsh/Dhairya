@@ -14,7 +14,13 @@ import { validateUser } from "../middleware/validationMiddleware.js";
 const router = express.Router();
 
 
-router.post("/register", upload.single('profileImage'), validateUser, registerUser);
+router.post(
+  "/register",
+  upload.single('profileImage'),
+  validateUser,
+  registerUser
+);
+
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 

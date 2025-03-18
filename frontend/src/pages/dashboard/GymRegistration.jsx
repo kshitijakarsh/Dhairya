@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '../../constants';
-import { FaDumbbell, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaDumbbell, FaPlus, FaTrash, FaImage } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 
 const GymRegistration = () => {
@@ -19,9 +19,11 @@ const GymRegistration = () => {
     phone: '',
     operation_hours: [{ day: 'Monday', open: '06:00', close: '22:00' }],
     facilities: [],
-    membership_charges: { monthly: '', yearly: '', family: '' },
+    membership_charges: { monthly: '', half_yearly: '', yearly: '' },
     description: ''
   });
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   const facilityOptions = [
     "Cardio Equipment", "Weightlifting", "Personal Training", "Swimming Pool",
@@ -81,16 +83,21 @@ const GymRegistration = () => {
     if (!charges.monthly || charges.monthly <= 0) {
       newErrors['membership_charges.monthly'] = 'Enter a valid monthly charge';
     }
-    if (!charges.yearly || charges.yearly <= 0) {
-      newErrors['membership_charges.yearly'] = 'Enter a valid yearly charge';
+    if (!charges.half_yearly || charges.half_yearly <= 0) {
+      newErrors['membership_charges.half_yearly'] = 'Enter a valid half yearly charge';
     }
-    if (!charges.family || charges.family <= 0) {
-      newErrors['membership_charges.family'] = 'Enter a valid family package charge';
+    if (!charges.yearly || charges.yearly <= 0) {   
+      newErrors['membership_charges.yearly'] = 'Enter a valid yearly charge';
     }
 
     // Description validation
     if (!formData.description || formData.description.length < 20) {
       newErrors.description = 'Description must be at least 20 characters';
+    }
+
+    // Image validation
+    if (images.length > 5) {
+      newErrors.images = 'Maximum 5 images allowed';
     }
 
     setErrors(newErrors);
@@ -161,6 +168,41 @@ const GymRegistration = () => {
     }));
   };
 
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const availableSlots = 5 - images.length;
+    
+    if (availableSlots <= 0) {
+      toast.error('Maximum 5 images allowed');
+      return;
+    }
+
+    const filesToAdd = files.slice(0, availableSlots);
+    const newImages = [];
+    const newPreviews = [];
+
+    filesToAdd.forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Only image files are allowed');
+        return;
+      }
+      newImages.push(file);
+      newPreviews.push(URL.createObjectURL(file));
+    });
+
+    if (files.length > availableSlots) {
+      toast.error(`Only ${availableSlots} more images can be added`);
+    }
+
+    setImages(prev => [...prev, ...newImages]);
+    setImagePreviews(prev => [...prev, ...newPreviews]);
+  };
+
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -175,21 +217,38 @@ const GymRegistration = () => {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       if (!token) throw new Error('Please login to register a gym.');
 
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const payload = {
-        ...formData,
-        membership_charges: {
-          monthly: Number(formData.membership_charges.monthly),
-          yearly: Number(formData.membership_charges.yearly),
-          family: Number(formData.membership_charges.family)
-        }
-      };
+      const formPayload = new FormData();
+      
+      // Append all form data
+      formPayload.append('name', formData.name);
+      formPayload.append('owner', formData.owner);
+      formPayload.append('phone', formData.phone);
+      formPayload.append('address.street', formData.address.street);
+      formPayload.append('address.city', formData.address.city);
+      formPayload.append('address.state', formData.address.state);
+      formPayload.append('address.zip', formData.address.zip);
+      formPayload.append('address.country', formData.address.country);
+      formPayload.append('operation_hours', JSON.stringify(formData.operation_hours));
+      formPayload.append('facilities', JSON.stringify(formData.facilities));
+      formPayload.append('membership_charges.monthly', formData.membership_charges.monthly);
+      formPayload.append('membership_charges.half_yearly', formData.membership_charges.half_yearly);
+      formPayload.append('membership_charges.yearly', formData.membership_charges.yearly);
+      formPayload.append('description', formData.description);
+      
+      // Append images
+      images.forEach(image => {
+        formPayload.append('images', image);
+      });
 
       const response = await axios.post(
         `${API_BASE_URL}/gyms/register`,
-        payload,
-        { headers }
+        formPayload,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
       );
 
       if (response.data.success) {
@@ -407,6 +466,57 @@ const GymRegistration = () => {
                     )}
                   </div>
                 ))}
+              </div>
+
+              {/* Gym Photos */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gym Photos (Maximum 5)
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {/* Image previews */}
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative group">
+                      <img 
+                        src={preview} 
+                        alt={`Preview ${index}`}
+                        className="h-32 w-full object-cover rounded-lg shadow-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <FaTrash className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* Upload button */}
+                  <label className={`h-32 flex items-center justify-center border-2 border-dashed rounded-lg cursor-pointer ${
+                    images.length >= 5 ? 
+                      'border-gray-300 bg-gray-100 cursor-not-allowed' : 
+                      'border-gray-300 hover:border-black'
+                  } transition-colors`}>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      accept="image/*"
+                      disabled={images.length >= 5}
+                    />
+                    <div className="text-center">
+                      <FaImage className={`mx-auto mb-1 ${images.length >= 5 ? 'text-gray-400' : 'text-gray-600'}`} />
+                      <span className={`text-xs ${images.length >= 5 ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {images.length >= 5 ? 'Maximum 5 images' : `Upload Images (${images.length}/5)`}
+                      </span>
+                    </div>
+                  </label>
+                </div>
+                {errors.images && (
+                  <p className="mt-1 text-sm text-red-500">{errors.images}</p>
+                )}
               </div>
 
               <button

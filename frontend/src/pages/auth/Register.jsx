@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { FaCamera } from 'react-icons/fa';
 
 const roles = [
   {
@@ -45,11 +46,13 @@ const Register = () => {
     name: '',
     email: '',
     password: '',
-    role: ''
+    role: '',
+    profilePicture: null
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const handleRoleSelect = (roleId) => {
     setFormData(prev => ({ 
@@ -67,16 +70,48 @@ const Register = () => {
     setError('');
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Please upload an image file');
+        return;
+      }
+      
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        setError('File size should be less than 2MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setFormData(prev => ({
+          ...prev,
+          profilePicture: file
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const registeredUser = await register({
-        ...formData,
-        role: formData.role
-      });
+      const formPayload = new FormData();
+      formPayload.append('name', formData.name);
+      formPayload.append('email', formData.email);
+      formPayload.append('password', formData.password);
+      formPayload.append('role', formData.role);
+      if (formData.profilePicture) {
+        formPayload.append('profileImage', formData.profilePicture);
+      }
+
+      const registeredUser = await register(formPayload);
       
       console.log("Registration response:", registeredUser);
       
@@ -182,6 +217,40 @@ const Register = () => {
           <div className={`transition-all duration-500 transform ${step === 2 ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 hidden'}`}>
             <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
               <div className="space-y-4">
+                <div className="flex flex-col items-center mb-6">
+                  <div className="relative group">
+                    <label 
+                      htmlFor="profilePicture"
+                      className="cursor-pointer block w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 hover:border-black transition-colors duration-200 relative overflow-hidden"
+                    >
+                      {imagePreview ? (
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <FaCamera className="text-gray-400 group-hover:text-black transition-colors duration-200" />
+                        </div>
+                      )}
+                    </label>
+                    <input
+                      id="profilePicture"
+                      name="profilePicture"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <div className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-sm">
+                      <FaCamera className="text-sm text-gray-600" />
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500 text-center">
+                    Click to upload profile picture
+                  </p>
+                </div>
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                     Full Name

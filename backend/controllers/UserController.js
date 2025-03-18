@@ -9,34 +9,29 @@ import Membership from "../models/MembershipSchema.js";
 dotenv.config();
 
 export const registerUser = async (req, res) => {
-  console.log(req.body);
-
   try {
-    const { email, password, name, role } = req.body;
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    const { name, email, password, role } = req.body;
+    
+    // File handling
     let profileImage = null;
     if (req.file) {
       const uploadedImage = await cloudinary.uploader.upload(req.file.path, {
         folder: 'profile_pics',
       });
       profileImage = uploadedImage.secure_url;
-      console.log("✅ Profile Image Uploaded:", profileImage);
     }
 
+    // Create user with all fields
+    const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
+      name,
       email,
       password: hashedPassword,
-      name,
       role,
-      profileImage,
+      profileImage
     });
 
+    // Generate token
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET_KEY,
@@ -44,21 +39,22 @@ export const registerUser = async (req, res) => {
     );
 
     await user.save();
+    
     res.status(201).json({
       token,
       user: {
         id: user._id,
-        email: user.email,
         name: user.name,
+        email: user.email,
         role: user.role,
-        profileImage: user.profileImage,
+        profileImage: user.profileImage
       },
-      message: "User registered successfully",
+      message: "Registration successful"
     });
 
   } catch (error) {
-    console.error("❌ Registration error:", error);
-    res.status(500).json({ message: "Error registering user" });
+    console.error("Registration error:", error);
+    res.status(500).json({ message: error.message || "Registration failed" });
   }
 };
 

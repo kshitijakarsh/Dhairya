@@ -57,13 +57,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async ({ name, email, password, role }) => {
+  const register = async (formData) => {
     try {
-      console.log("Registering user:", { name, email, password, role });
+      console.log("Registering user:", formData);
 
-      const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.REGISTER}`, {
-        name, email, password, role,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/users/register`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
 
       const { token, user } = response.data;
       if (!token || !user) throw new Error("Invalid response from server");

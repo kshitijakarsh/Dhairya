@@ -100,7 +100,12 @@ export const validateGymUpdate = async (req, res, next) => {
 
 export const validateUser = (req, res, next) => {
   try {
-    req.body = userSchema.parse(req.body);
+    // Extract fields from form-data
+    const { name, email, password, role } = req.body;
+    const userData = { name, email, password, role };
+    
+    // Validate using zod schema
+    userSchema.parse(userData);
     next();
   } catch (error) {
     res.status(400).json({ errors: error.errors });

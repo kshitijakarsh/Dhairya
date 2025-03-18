@@ -69,6 +69,7 @@ const GymSchema = new Schema(
         date: { type: Date, default: Date.now },
       },
     ],
+    images: [{ type: String }],
 
     memberships: [{ type: mongoose.Schema.Types.ObjectId, ref: "Membership" }],
   },

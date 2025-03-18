@@ -1,3 +1,4 @@
+import cloudinary from '../utils/cloudinary.js';
 import Gyms from "../models/GymSchema.js";
 import User from "../models/UserSchema.js";
 import dotenv from "dotenv";
@@ -16,7 +17,6 @@ export const registerGym = async (req, res) => {
     const validatedData = req.validatedGym;
     const { owner, name } = validatedData;
 
-    // Check if owner exists
     const existingOwner = await User.findById(owner);
     if (!existingOwner) {
       return res.status(404).json({ 
@@ -25,7 +25,6 @@ export const registerGym = async (req, res) => {
       });
     }
 
-    // Check for duplicate gym name for this owner
     const existingGym = await Gyms.findOne({ name, owner });
     if (existingGym) {
       return res.status(409).json({ 
@@ -34,7 +33,22 @@ export const registerGym = async (req, res) => {
       });
     }
 
-    const gym = new Gyms(validatedData);
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const uploadedImage = await cloudinary.uploader.upload(file.path, {
+          folder: 'gym_images',
+        });
+        imageUrls.push(uploadedImage.secure_url);
+      }
+      console.log("✅ Uploaded Gym Images:", imageUrls);
+    }
+
+    const gym = new Gyms({
+      ...validatedData,
+      images: imageUrls
+    });
+
     await gym.save();
 
     res.status(201).json({ 
@@ -42,10 +56,12 @@ export const registerGym = async (req, res) => {
       message: "Gym registered successfully", 
       data: gym 
     });
+
   } catch (error) {
     handleError(res, error, "Error registering gym");
   }
 };
+
 
 export const getGymById = async (req, res) => {
   try {

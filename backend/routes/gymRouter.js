@@ -9,7 +9,12 @@ router.get('/view/:id', getGymById);
 
 router.use(authenticateToken);
 
-router.post('/register', authenticateOwner, validateGym, registerGym);
+router.post('/register', 
+    authenticateOwner, 
+    upload.array('images', 5),
+    validateGym, 
+    registerGym
+  );  
 router.get('/my-gyms', authenticateOwner, getMyGyms);
 router.put('/:id', authenticateOwner, validateGymUpdate, updateGym);
 router.delete('/:id', authenticateOwner, deleteGym);

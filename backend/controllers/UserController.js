@@ -21,6 +21,7 @@ export const registerUser = async (req, res) => {
       profileImage = uploadedImage.secure_url;
     }
 
+    // Create user with all fields
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
       name,
@@ -85,7 +86,7 @@ export const loginUser = async (req, res) => {
         name: user.name,
         role: user.role,
         dashboard : user.dashboardId,
-        profileImage: user.profileImage
+        profileImage : user.profileImage
       },
     });
   } catch (error) {
@@ -241,27 +242,27 @@ export const updateProfile = async (req, res) => {
 };
 
 export const getUserDashboard = async (req, res) => {
+  
   try {
-    const user = await User.findById(req.user.id)
-      .select('-password')
-      .populate('gymEnrolled');
-    
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     const dashboard = await UserDashboard.findOne({ userId: user._id });
+    if (!dashboard) {
+      return res.status(404).json({ message: "Dashboard not found. Please complete your profile setup." });
+    }
+    console.log(dashboard, user.profileImage);
     
     res.status(200).json({
       success: true,
       message: "Dashboard retrieved successfully",
-      dashboard: {
-        ...dashboard._doc,
-        profile: {
-          ...dashboard.profile,
-          profileImage: user.profileImage
-        }
-      }
+      dashboard,
+      profileImage: user.profileImage
     });
   } catch (error) {
+    console.error("Error fetching dashboard:", error);
     res.status(500).json({ message: "Error fetching dashboard", error: error.message });
   }
 };

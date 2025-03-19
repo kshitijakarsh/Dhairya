@@ -11,8 +11,7 @@ dotenv.config();
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
-    
-    // File handling
+
     let profileImage = null;
     if (req.file) {
       const uploadedImage = await cloudinary.uploader.upload(req.file.path, {
@@ -85,7 +84,7 @@ export const loginUser = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
-        dashboard : user.dashboardId,
+        dashboard : user.userDashboard,
         profileImage : user.profileImage
       },
     });
@@ -151,7 +150,7 @@ export const createProfile = async (req, res) => {
 
     await dashboard.save();
 
-    user.dashboardId = dashboard._id;
+    user.userDashboard = dashboard._id;
     await user.save();
 
     res.status(201).json({
@@ -173,71 +172,73 @@ export const updateProfile = async (req, res) => {
     const updates = req.body;
     console.log("📝 Received updates:", updates);
 
+    // Fetch User & Ensure Dashboard Exists
     const user = await User.findById(userId);
-    if (!user?.dashboardId) {
+    if (!user || !user.dashboardId) {
+      return res.status(404).json({ message: "Dashboard not found" });
+    }
+
+    const dashboard = await UserDashboard.findById(user.dashboardId);
+    if (!dashboard) {
       return res.status(404).json({ message: "Dashboard not found" });
     }
 
     const updateOperations = {};
     const arrayFilters = [];
 
+    /** ✅ Handling Attendance Update */
     if (updates.attendance) {
       const { month, day } = updates.attendance;
-      
-      // First try to add to existing month
-      updateOperations.$addToSet = { 
-        "attendance.$[elem].daysPresent": day 
-      };
-      arrayFilters.push({ "elem.month": month });
 
-      // Add fallback to create new month entry if none exists
-      updateOperations.$push = updateOperations.$push || {};
-      updateOperations.$push.attendance = {
-        $each: [{
-          month: month,
-          daysPresent: [day]
-        }],
-        $position: 0,
-        $sort: { month: 1 }
-      };
+      // Find if the month already exists in attendance
+      const existingMonth = dashboard.attendance.find((entry) => entry.month === month);
+
+      if (existingMonth) {
+        // If month exists, add the day to it
+        updateOperations.$addToSet = {
+          "attendance.$[elem].daysPresent": day
+        };
+        arrayFilters.push({ "elem.month": month });
+      } else {
+        // If month doesn't exist, create a new month entry
+        updateOperations.$push = {
+          attendance: {
+            month: month,
+            daysPresent: [day]
+          }
+        };
+      }
     }
 
+    /** ✅ Handling Weight Update */
     if (updates.currentWeight) {
       updateOperations.$push = {
         monthlyData: {
           weight: updates.currentWeight,
           date: new Date().toISOString(),
-        },
+        }
       };
     }
 
+    /** ✅ Handling User Details Update */
     if (updates.userDetails) {
-      updateOperations.$set = {
-        ...updateOperations.$set,
-        ...Object.entries(updates.userDetails).reduce((acc, [key, value]) => {
-          acc[`userDetails.${key}`] = value;
-          return acc;
-        }, {})
-      };
+      for (const key in updates.userDetails) {
+        updateOperations.$set = updateOperations.$set || {};
+        updateOperations.$set[`userDetails.${key}`] = updates.userDetails[key];
+      }
     }
 
     updateOperations.$set = { ...updateOperations.$set, lastUpdated: Date.now() };
 
     if (Object.keys(updateOperations).length > 0) {
-      const updateQuery = {
-        _id: user.dashboardId
-      };
-
       const updateOptions = {
         new: true,
         runValidators: true,
-        upsert: false,
         arrayFilters: arrayFilters.length > 0 ? arrayFilters : undefined,
-        setDefaultsOnInsert: true
       };
 
       const updatedDashboard = await UserDashboard.findByIdAndUpdate(
-        updateQuery,
+        user.dashboardId,
         updateOperations,
         updateOptions
       );

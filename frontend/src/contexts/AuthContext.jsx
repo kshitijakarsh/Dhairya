@@ -48,6 +48,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.LOGIN}`, { email, password });
       const { token, user } = response.data;
+      console.log(user);
+      
       
       if (!token || !user) throw new Error("Invalid response from server");
 

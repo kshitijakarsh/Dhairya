@@ -30,7 +30,6 @@ ChartJS.register(
   Legend
 );
 
-// Icons object
 const Icons = {
   Weight: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>,
   Target: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
@@ -44,7 +43,6 @@ const Icons = {
   Goal: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>,
 };
 
-// Reusable Card Components
 const Card = ({ children, className = "" }) => (
   <div className={`bg-white rounded-xl shadow-sm border border-gray-100 ${className}`}>
     {children}
@@ -78,22 +76,54 @@ const MotivationCard = ({ icon: Icon, title, message }) => (
 // Chart options
 const chartOptions = {
   responsive: true,
+  maintainAspectRatio: false,
   plugins: {
     legend: {
       position: 'top',
+      labels: {
+        font: {
+          size: 14
+        }
+      }
     },
     title: {
-      display: true,
-      text: 'Weight Progress',
-    },
+      display: false
+    }
   },
   scales: {
+    x: {
+      ticks: {
+        font: {
+          size: 12
+        }
+      },
+      grid: {
+        display: false
+      }
+    },
     y: {
       beginAtZero: false,
+      ticks: {
+        font: {
+          size: 12
+        }
+      },
       title: {
         display: true,
-        text: 'Weight (kg)'
+        text: 'Weight (kg)',
+        font: {
+          size: 14
+        }
       }
+    }
+  },
+  elements: {
+    line: {
+      borderWidth: 2
+    },
+    point: {
+      radius: 3,
+      hoverRadius: 6
     }
   }
 };
@@ -288,7 +318,10 @@ const UserDashboard = () => {
         });
 
         if (data?.success) {
-          setDashboard(data.dashboard);
+          setDashboard({
+            ...data.dashboard,
+            profileImage: data.dashboard.profileImage || user?.profileImage
+          });
           setAttendance(formatAttendance(data.dashboard.attendance));
         }
       } catch (error) {
@@ -299,7 +332,7 @@ const UserDashboard = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [user?.profileImage]);
 
   const formatAttendance = (attendanceData = []) => {
     return attendanceData.reduce((acc, { month, daysPresent = [] }) => {
@@ -314,7 +347,6 @@ const UserDashboard = () => {
       const [monthNum, day] = dateKey.split('-');
       const monthName = new Date(2024, monthNum - 1).toLocaleString('default', { month: 'long' });
       
-      // Use PATCH request for attendance
       await axios.patch(
         `${API_BASE_URL}/users/update`,
         { 
@@ -395,13 +427,11 @@ const UserDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Verify with server
       const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`);
       setDashboard(data.dashboard);
 
       return true;
     } catch (error) {
-      // Revert on error
       const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`);
       setDashboard(data.dashboard);
       
@@ -424,7 +454,6 @@ const UserDashboard = () => {
   const { budget, gymEnrolled, gymName } = dashboard.userDetails;
 
   console.log('Profile Image URL:', user?.profileImage);
-  // Try opening this URL directly in a new browser tab
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
@@ -435,24 +464,16 @@ const UserDashboard = () => {
             {/* Profile Image Section */}
             <div className="relative group">
               <div className="w-24 h-24 rounded-full border-4 border-white/20 shadow-lg overflow-hidden transition-all duration-300 group-hover:border-white/40">
-                {(user?.profileImage || dashboard?.profileImage) ? (
-                  <img 
-                    src={user?.profileImage || dashboard?.profileImage}
-                    alt="Profile" 
-                    className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-110"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      const fallback = e.target.parentElement.querySelector('.fallback');
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                ) : (
-                  <div className="fallback w-full h-full bg-slate-700 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">
-                      {user?.name?.charAt(0).toUpperCase() || 'U'}
-                    </span>
-                  </div>
-                )}
+                <img 
+                  src={dashboard.profileImage || user?.profileImage}
+                  alt="Profile" 
+                  className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-110"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    const fallback = e.target.parentElement.querySelector('.fallback');
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
               </div>
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full">
                 <span className="text-xs font-medium text-white">Click to edit</span>
@@ -550,11 +571,16 @@ const UserDashboard = () => {
 
         {/* Weight Progress Chart */}
         <Card className="p-6 hover:shadow-lg transition-shadow">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <Icons.Chart />
-            Weight Progress Journey
-          </h2>
-          <div className="h-[400px] w-full">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Icons.Chart />
+              Weight Progress Journey
+            </h2>
+            <div className="text-sm text-gray-500">
+              {dashboard.monthlyData.length} data points
+            </div>
+          </div>
+          <div className="h-[500px] w-full">
             <Line 
               options={chartOptions} 
               data={{
@@ -563,8 +589,9 @@ const UserDashboard = () => {
                   label: 'Weight Progress',
                   data: dashboard.monthlyData.map(d => d.weight),
                   borderColor: 'rgb(59, 130, 246)',
-                  backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                  tension: 0.3
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  tension: 0.3,
+                  fill: true
                 }]
               }} 
             />

@@ -183,7 +183,23 @@ export const updateProfile = async (req, res) => {
 
     if (updates.attendance) {
       const { month, day } = updates.attendance;
-      updateOperations.$addToSet = { "attendance.$[elem].daysPresent": day };
+      
+      // First try to add to existing month
+      updateOperations.$addToSet = { 
+        "attendance.$[elem].daysPresent": day 
+      };
+      arrayFilters.push({ "elem.month": month });
+
+      // Add fallback to create new month entry if none exists
+      updateOperations.$push = updateOperations.$push || {};
+      updateOperations.$push.attendance = {
+        $each: [{
+          month: month,
+          daysPresent: [day]
+        }],
+        $position: 0,
+        $sort: { month: 1 }
+      };
     }
 
     if (updates.currentWeight) {
@@ -215,11 +231,10 @@ export const updateProfile = async (req, res) => {
       const updateOptions = {
         new: true,
         runValidators: true,
+        upsert: false,
+        arrayFilters: arrayFilters.length > 0 ? arrayFilters : undefined,
+        setDefaultsOnInsert: true
       };
-
-      if (arrayFilters.length > 0) {
-        updateOptions.arrayFilters = arrayFilters;
-      }
 
       const updatedDashboard = await UserDashboard.findByIdAndUpdate(
         updateQuery,

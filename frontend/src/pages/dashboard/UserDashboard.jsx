@@ -476,7 +476,6 @@ const UserDashboard = () => {
                 />
               </div>
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full">
-                <span className="text-xs font-medium text-white">Click to edit</span>
               </div>
               <div className="fallback hidden w-full h-full bg-slate-700 absolute top-0 left-0 items-center justify-center">
                 <span className="text-2xl font-bold text-white">

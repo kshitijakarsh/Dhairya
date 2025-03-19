@@ -184,7 +184,6 @@ export const updateProfile = async (req, res) => {
     if (updates.attendance) {
       const { month, day } = updates.attendance;
       updateOperations.$addToSet = { "attendance.$[elem].daysPresent": day };
-      arrayFilters.push({ "elem.month": month });
     }
 
     if (updates.currentWeight) {
@@ -253,13 +252,11 @@ export const getUserDashboard = async (req, res) => {
     if (!dashboard) {
       return res.status(404).json({ message: "Dashboard not found. Please complete your profile setup." });
     }
-    console.log(dashboard, user.profileImage);
     
     res.status(200).json({
       success: true,
       message: "Dashboard retrieved successfully",
       dashboard,
-      profileImage: user.profileImage
     });
   } catch (error) {
     console.error("Error fetching dashboard:", error);

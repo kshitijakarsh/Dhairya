@@ -120,7 +120,7 @@ export const createProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.dashboardId) {
+    if (user.userDashboard) {
       return res.status(400).json({ message: "Dashboard already exists" });
     }
 
@@ -178,7 +178,7 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ message: "Dashboard not found" });
     }
 
-    const dashboard = await UserDashboard.findById(user.dashboardId);
+    const dashboard = await UserDashboard.findById(user.userDashboard);
     if (!dashboard) {
       return res.status(404).json({ message: "Dashboard not found" });
     }
@@ -238,7 +238,7 @@ export const updateProfile = async (req, res) => {
       };
 
       const updatedDashboard = await UserDashboard.findByIdAndUpdate(
-        user.dashboardId,
+        user.userDashboard,
         updateOperations,
         updateOptions
       );

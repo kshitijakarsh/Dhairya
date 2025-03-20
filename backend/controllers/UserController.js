@@ -174,7 +174,7 @@ export const updateProfile = async (req, res) => {
 
     // Fetch User & Ensure Dashboard Exists
     const user = await User.findById(userId);
-    if (!user || !user.dashboardId) {
+    if (!user || !user.userDashboard) {
       return res.status(404).json({ message: "Dashboard not found" });
     }
 

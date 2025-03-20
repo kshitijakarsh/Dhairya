@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { API_BASE_URL, STORAGE_KEYS } from "../constants";
+import { API_BASE_URL, STORAGE_KEYS } from "../../constants";
 import {
   FaStar,
   FaMapMarkerAlt,
@@ -11,7 +11,7 @@ import {
   FaChevronLeft,
   FaChevronRight,
 } from "react-icons/fa";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "framer-motion";
 
 const GymDetails = () => {

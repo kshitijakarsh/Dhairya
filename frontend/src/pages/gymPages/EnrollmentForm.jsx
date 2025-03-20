@@ -1,9 +1,9 @@
 // src/pages/EnrollmentForm.jsx
 import React, { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { API_BASE_URL, STORAGE_KEYS } from '../constants';
+import { API_BASE_URL, STORAGE_KEYS } from '../../constants';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 

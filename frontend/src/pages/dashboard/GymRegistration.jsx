@@ -219,26 +219,44 @@ const GymRegistration = () => {
 
       const formPayload = new FormData();
       
-      // Append all form data
+      // Append structured data
       formPayload.append('name', formData.name);
       formPayload.append('owner', formData.owner);
       formPayload.append('phone', formData.phone);
-      formPayload.append('address.street', formData.address.street);
-      formPayload.append('address.city', formData.address.city);
-      formPayload.append('address.state', formData.address.state);
-      formPayload.append('address.zip', formData.address.zip);
-      formPayload.append('address.country', formData.address.country);
+      formPayload.append('address', JSON.stringify(formData.address));
       formPayload.append('operation_hours', JSON.stringify(formData.operation_hours));
       formPayload.append('facilities', JSON.stringify(formData.facilities));
-      formPayload.append('membership_charges.monthly', formData.membership_charges.monthly);
-      formPayload.append('membership_charges.half_yearly', formData.membership_charges.half_yearly);
-      formPayload.append('membership_charges.yearly', formData.membership_charges.yearly);
+      formPayload.append('membership_charges', JSON.stringify({
+        monthly: Number(formData.membership_charges.monthly),
+        half_yearly: Number(formData.membership_charges.half_yearly),
+        yearly: Number(formData.membership_charges.yearly)
+      }));
       formPayload.append('description', formData.description);
       
       // Append images
       images.forEach(image => {
         formPayload.append('images', image);
       });
+
+      // Add logging here
+      console.log("📤 Sending registration request with:", {
+        formData: {
+          ...formData,
+          operation_hours: formData.operation_hours,
+          facilities: formData.facilities,
+          membership_charges: formData.membership_charges
+        },
+        images: images.map(img => ({
+          name: img.name,
+          type: img.type,
+          size: img.size
+        }))
+      });
+
+      console.log("📦 FormData contents:");
+      for (let [key, value] of formPayload.entries()) {
+        console.log(`${key}:`, value);
+      }
 
       const response = await axios.post(
         `${API_BASE_URL}/gyms/register`,
@@ -259,7 +277,6 @@ const GymRegistration = () => {
       const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
       toast.error(errorMessage);
       
-      // Handle validation errors from backend
       if (error.response?.data?.errors) {
         const backendErrors = {};
         error.response.data.errors.forEach(err => {

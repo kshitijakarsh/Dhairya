@@ -51,16 +51,16 @@ const gymSchema = z.object({
 
 export const validateGym = async (req, res, next) => {
   try {
-    // 🔹 Convert string fields (from form-data) to JSON
-    if (req.body.address) req.body.address = JSON.parse(req.body.address);
-    if (req.body.operation_hours) req.body.operation_hours = JSON.parse(req.body.operation_hours);
-    if (req.body.facilities) req.body.facilities = JSON.parse(req.body.facilities);
-    if (req.body.membership_charges) req.body.membership_charges = JSON.parse(req.body.membership_charges);
+    // Parse all JSON fields consistently
+    req.body = {
+      ...req.body,
+      address: JSON.parse(req.body.address),
+      operation_hours: JSON.parse(req.body.operation_hours),
+      facilities: JSON.parse(req.body.facilities),
+      membership_charges: JSON.parse(req.body.membership_charges)
+    };
 
-    // 🔹 Validate using Zod
     const validatedData = await gymSchema.parseAsync(req.body);
-
-    // Attach validated data to request
     req.validatedGym = validatedData;
     next();
   } catch (error) {

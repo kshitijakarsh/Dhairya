@@ -39,6 +39,7 @@ const GymSchema = new Schema(
     },
     name: { type: String, required: true, minlength: 3 },
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    description: String,
     address: {
       street: { type: String, required: true, minlength: 3 },
       city: { type: String, required: true, minlength: 2 },

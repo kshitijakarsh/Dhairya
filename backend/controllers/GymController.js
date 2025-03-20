@@ -189,7 +189,7 @@ export const searchGyms = async (req, res) => {
         { description: searchRegex }
       ]
     })
-    .select('name address facilities membership_charges')
+    .select('name address facilities membership_charges images')
     .sort({ created_at: -1 }) 
     .limit(50)
     .lean();

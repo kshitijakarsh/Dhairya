@@ -60,10 +60,11 @@ const Search = () => {
         facilities: Array.isArray(gym.facilities) ? gym.facilities : [],
         membership_charges: {
           monthly: gym.membership_charges?.monthly || 0,
-          half: gym.membership_charges?.half_yearly || 0,
+          half_yearly: gym.membership_charges?.half_yearly || 0,
           yearly: gym.membership_charges?.yearly || 0,
         },
         ratings: Array.isArray(gym.ratings) ? gym.ratings : [],
+        images: Array.isArray(gym.images) ? gym.images : []
       }));
 
       setResults(formattedResults);
@@ -143,9 +144,25 @@ const Search = () => {
                   className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
                 >
                   {/* Image Section */}
-                  <div className="relative h-[240px] bg-gray-100">
-                    <div className="absolute top-6 left-6">
-                    </div>
+                  <div className="relative h-[240px] bg-gray-100 overflow-hidden">
+                    {gym.images?.length > 0 ? (
+                      <img 
+                        src={gym.images[0]} 
+                        alt={`${gym.name} facility`}
+                        className="w-full h-full object-cover transform transition-transform duration-300 hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                        <span className="text-sm">No photos available</span>
+                      </div>
+                    )}
+                    
+                    {/* Safe image counter */}
+                    {gym.images?.length > 1 && (
+                      <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
+                        +{gym.images.length - 1}
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-6">

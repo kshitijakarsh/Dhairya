@@ -196,10 +196,7 @@ const GymDetails = () => {
             <section className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-all">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">About</h2>
               <p className="text-gray-600 leading-relaxed">
-                {gym.description ||
-                  "Welcome to " +
-                    gym.name +
-                    ", your premier fitness destination. We offer state-of-the-art equipment and expert guidance to help you achieve your fitness goals."}
+                {gym.description}
               </p>
             </section>
 

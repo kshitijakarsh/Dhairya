@@ -13,7 +13,7 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { motion } from "framer-motion";
-import { toast } from 'react-hot-toast';
+import { toast } from "react-hot-toast";
 
 const GymDetails = () => {
   const { id } = useParams();
@@ -26,41 +26,29 @@ const GymDetails = () => {
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   const navigate = useNavigate();
 
-  const images = [
-    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48",
-    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f",
-    "https://images.unsplash.com/photo-1571902943202-507ec2618e8f",
-    "https://images.unsplash.com/photo-1517963879433-6ad2b056d712",
-  ];
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
   useEffect(() => {
     const fetchGymDetails = async () => {
       try {
         const [gymResponse, userResponse] = await Promise.all([
           axios.get(`${API_BASE_URL}/gyms/view/${id}`),
-          user ? axios.get(
-            `${API_BASE_URL}/users/dashboard`, 
-            { 
-              headers: { 
-                Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)}` 
-              } 
-            }
-          ) : Promise.resolve(null)
+          user
+            ? axios.get(`${API_BASE_URL}/users/dashboard`, {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem(
+                    STORAGE_KEYS.AUTH_TOKEN
+                  )}`,
+                },
+              })
+            : Promise.resolve(null),
         ]);
 
         setGym(gymResponse.data);
 
         if (userResponse && userResponse.data) {
           const userEnrollments = userResponse.data.enrolledGyms || [];
-          setIsEnrolled(userEnrollments.some(enrollment => enrollment.gym === id));
+          setIsEnrolled(
+            userEnrollments.some((enrollment) => enrollment.gym === id)
+          );
         }
       } catch (error) {
         console.error("Error fetching details:", error);
@@ -95,8 +83,8 @@ const GymDetails = () => {
   if (!gym) return null;
 
   const handleEnrollment = () => {
-    navigate(`/enroll/${id}`, { 
-      state: { 
+    navigate(`/enroll/${id}`, {
+      state: {
         gym: gym,
         plans: [
           {
@@ -114,9 +102,19 @@ const GymDetails = () => {
             price: gym.membership_charges.yearly,
             desc: "Up to 4 members",
           },
-        ]
-      } 
+        ],
+      },
     });
+  };
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % gym.images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex(
+      (prev) => (prev - 1 + gym.images.length) % gym.images.length
+    );
   };
 
   return (
@@ -139,7 +137,7 @@ const GymDetails = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
-            src={`${images[currentImageIndex]}?auto=format&fit=crop&w=2000&q=80`}
+            src={gym.images[currentImageIndex]}
             alt="Gym"
             className="w-full h-full object-cover"
           />
@@ -162,7 +160,7 @@ const GymDetails = () => {
 
           {/* Image Indicators */}
           <div className="absolute bottom-8 inset-x-0 flex justify-center gap-2 z-20">
-            {images.map((_, index) => (
+            {gym.images.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}

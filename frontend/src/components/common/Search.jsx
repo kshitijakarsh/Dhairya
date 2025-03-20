@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../../constants';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaRegHeart, FaShare, FaStar, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
+import { FaSearch, FaStar, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
+import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
+import { STORAGE_KEYS } from '../../constants';
 
-// Debounce hook
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -26,7 +28,7 @@ const Search = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
 
   // Debounce search term
   const debouncedSearchTerm = useDebounce(searchTerm, 10);
@@ -58,8 +60,8 @@ const Search = () => {
         facilities: Array.isArray(gym.facilities) ? gym.facilities : [],
         membership_charges: {
           monthly: gym.membership_charges?.monthly || 0,
+          half: gym.membership_charges?.half_yearly || 0,
           yearly: gym.membership_charges?.yearly || 0,
-          family: gym.membership_charges?.family || 0,
         },
         ratings: Array.isArray(gym.ratings) ? gym.ratings : [],
       }));
@@ -78,15 +80,34 @@ const Search = () => {
     handleSearch();
   }, [debouncedSearchTerm, handleSearch]);
 
+  const handleEnrollment = async (gymId) => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/gyms/${gymId}/enroll`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        // Update user context or reload user data
+        toast.success('Enrollment successful!');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Enrollment failed');
+    }
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen">
-      {/* Search Header */}
       <div className="text-center mb-16">
         <h1 className="text-[40px] text-gray-900 mb-4">Find Your Perfect Gym</h1>
         <p className="text-gray-500">Search by gym name, location, or facilities</p>
       </div>
 
-      {/* Search Input */}
       <div className="w-full max-w-2xl px-4">
         <div className="relative">
           <input
@@ -105,7 +126,6 @@ const Search = () => {
           </div>
         )}
 
-        {/* Loading State */}
         {loading && (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -113,7 +133,6 @@ const Search = () => {
         )}
       </div>
 
-      {/* Results Section - Full Width */}
       {results.length > 0 && (
         <div className="w-full px-4 sm:px-6 lg:px-8 mt-12">
           <div className="max-w-[1800px] mx-auto">
@@ -129,9 +148,7 @@ const Search = () => {
                     </div>
                   </div>
 
-                  {/* Content Section */}
                   <div className="p-6">
-                    {/* Header with Name and Price */}
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">{gym.name}</h3>
@@ -149,9 +166,7 @@ const Search = () => {
                       </div>
                     </div>
 
-                    {/* Info Section */}
                     <div className="space-y-3 mb-6">
-                      {/* Location */}
                       <div className="flex items-center gap-3 text-gray-600">
                         <FaMapMarkerAlt className="w-5 h-5 flex-shrink-0 text-gray-500" />
                         <div>
@@ -162,14 +177,12 @@ const Search = () => {
                         </div>
                       </div>
 
-                      {/* Hours */}
                       <div className="flex items-center gap-3 text-gray-600">
                         <FaClock className="w-5 h-5 flex-shrink-0 text-gray-500" />
                         <p className="text-base">Open · 6AM - 10PM</p>
                       </div>
                     </div>
 
-                    {/* Facilities */}
                     <div className="flex flex-wrap gap-2 mb-6">
                       {gym.facilities.map((facility, index) => (
                         <span 
@@ -181,7 +194,6 @@ const Search = () => {
                       ))}
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="grid grid-cols-2 gap-3">
                       <Link
                         to={`/gym/${gym._id}`}
@@ -190,11 +202,20 @@ const Search = () => {
                         View Details
                       </Link>
                       {user ? (
-                        <button
-                          className="px-4 py-2.5 text-center text-white bg-black rounded-xl hover:bg-gray-900 transition-colors font-medium"
-                        >
-                          Book Now
-                        </button>
+                        user.enrolledGyms?.includes(gym._id) ? (
+                          <button
+                            className="px-4 py-2.5 text-center text-white bg-gray-400 rounded-xl cursor-not-allowed font-medium"
+                            disabled
+                          >
+                            Enrolled
+                          </button>
+                        ) : (
+                          <button
+                            className="px-4 py-2.5 text-center text-white bg-black rounded-xl hover:bg-gray-900 transition-colors font-medium"
+                          >
+                            Enroll Now
+                          </button>
+                        )
                       ) : (
                         <Link
                           to="/login"
@@ -212,7 +233,6 @@ const Search = () => {
         </div>
       )}
 
-      {/* No Results Message */}
       {results.length === 0 && !loading && searchTerm && (
         <div className="text-center mt-8">
           <p className="text-gray-500">No gyms found matching your search.</p>

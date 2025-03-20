@@ -102,15 +102,15 @@ const GymCard = ({ gym, onEdit, onDelete }) => {
               </div>
             </div>
             <div className="relative bg-gray-100 p-4 rounded-xl group hover:bg-gray-900 transition-colors duration-200">
-              <div className="text-gray-700 font-medium mb-1 group-hover:text-gray-400">Yearly</div>
+              <div className="text-gray-700 font-medium mb-1 group-hover:text-gray-400">Half Yearly</div>
               <div className="text-2xl font-bold text-gray-900 group-hover:text-white">
-                ₹{formatPrice(gym.membership_charges.yearly)}
+                ₹{formatPrice(gym.membership_charges.half_yearly)}
               </div>
             </div>
             <div className="relative bg-gray-100 p-4 rounded-xl group hover:bg-gray-900 transition-colors duration-200">
-              <div className="text-gray-700 font-medium mb-1 group-hover:text-gray-400">Family</div>
+              <div className="text-gray-700 font-medium mb-1 group-hover:text-gray-400">Yearly</div>
               <div className="text-2xl font-bold text-gray-900 group-hover:text-white">
-                ₹{formatPrice(gym.membership_charges.family)}
+                ₹{formatPrice(gym.membership_charges.yearly)}
               </div>
             </div>
           </div>

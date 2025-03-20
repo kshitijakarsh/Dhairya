@@ -43,8 +43,8 @@ const gymSchema = z.object({
   facilities: z.array(z.string()).min(1, 'At least one facility is required'),
   membership_charges: z.object({
     monthly: z.number().min(0, 'Monthly charges cannot be negative'),
-    half_yearly: z.number().min(0, 'Yearly charges cannot be negative'),
-    yearly: z.number().min(0, 'Family charges cannot be negative'),
+    half_yearly: z.number().min(0, 'Half Yearly charges cannot be negative'),
+    yearly: z.number().min(0, 'Yearly charges cannot be negative'),
   }),
   description: z.string().min(20, 'Description must be at least 20 characters').optional(),
 });

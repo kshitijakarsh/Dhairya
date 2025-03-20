@@ -21,7 +21,7 @@ const GymEdit = () => {
     phone: '',
     operation_hours: [{ day: 'Monday', open: '06:00', close: '22:00' }],
     facilities: [],
-    membership_charges: { monthly: '', yearly: '', family: '' },
+    membership_charges: { monthly: '', half_yearly: '', yearly: '' },
     description: ''
   });
 
@@ -109,11 +109,11 @@ const GymEdit = () => {
     if (!charges.monthly || charges.monthly <= 0) {
       newErrors['membership_charges.monthly'] = 'Enter a valid monthly charge';
     }
+    if (!charges.half_yearly || charges.half_yearly <= 0) {
+      newErrors['membership_charges.half_yearly'] = 'Enter a valid half yearly charge';
+    }
     if (!charges.yearly || charges.yearly <= 0) {
       newErrors['membership_charges.yearly'] = 'Enter a valid yearly charge';
-    }
-    if (!charges.family || charges.family <= 0) {
-      newErrors['membership_charges.family'] = 'Enter a valid family package charge';
     }
 
     // Description validation
@@ -207,8 +207,8 @@ const GymEdit = () => {
         ...formData,
         membership_charges: {
           monthly: Number(formData.membership_charges.monthly),
-          yearly: Number(formData.membership_charges.yearly),
-          family: Number(formData.membership_charges.family)
+          half_yearly: Number(formData.membership_charges.half_yearly),
+          yearly: Number(formData.membership_charges.yearly)
         }
       };
 

@@ -13,7 +13,6 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { motion } from "framer-motion";
-import { toast } from "react-hot-toast";
 
 const GymDetails = () => {
   const { id } = useParams();
@@ -29,27 +28,8 @@ const GymDetails = () => {
   useEffect(() => {
     const fetchGymDetails = async () => {
       try {
-        const [gymResponse, userResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/gyms/view/${id}`),
-          user
-            ? axios.get(`${API_BASE_URL}/users/dashboard`, {
-                headers: {
-                  Authorization: `Bearer ${localStorage.getItem(
-                    STORAGE_KEYS.AUTH_TOKEN
-                  )}`,
-                },
-              })
-            : Promise.resolve(null),
-        ]);
-
+        const gymResponse = await axios.get(`${API_BASE_URL}/gyms/view/${id}`);
         setGym(gymResponse.data);
-
-        if (userResponse && userResponse.data) {
-          const userEnrollments = userResponse.data.enrolledGyms || [];
-          setIsEnrolled(
-            userEnrollments.some((enrollment) => enrollment.gym === id)
-          );
-        }
       } catch (error) {
         console.error("Error fetching details:", error);
         setError("Failed to load gym details. Please try again later.");
@@ -142,7 +122,6 @@ const GymDetails = () => {
             className="w-full h-full object-cover"
           />
 
-          {/* Carousel Controls */}
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-8 z-20">
             <button
               onClick={prevImage}
@@ -158,7 +137,6 @@ const GymDetails = () => {
             </button>
           </div>
 
-          {/* Image Indicators */}
           <div className="absolute bottom-8 inset-x-0 flex justify-center gap-2 z-20">
             {gym.images.map((_, index) => (
               <button
@@ -209,7 +187,6 @@ const GymDetails = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Info */}
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -301,14 +278,12 @@ const GymDetails = () => {
             </section>
           </motion.div>
 
-          {/* Right Column - Pricing Only */}
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.7 }}
             className="lg:sticky lg:top-8 lg:h-fit"
           >
-            {/* Membership Plans */}
             <section className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-all">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 Membership Plans

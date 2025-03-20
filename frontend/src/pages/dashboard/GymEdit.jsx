@@ -62,20 +62,17 @@ const GymEdit = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Name validation
     if (!formData.name.trim()) {
       newErrors.name = 'Gym name is required';
     } else if (formData.name.length < 3) {
       newErrors.name = 'Gym name must be at least 3 characters';
     }
 
-    // Phone validation
     const phoneRegex = /^[6-9]\d{9}$/;
     if (!phoneRegex.test(formData.phone)) {
       newErrors.phone = 'Enter a valid 10-digit Indian phone number';
     }
 
-    // Address validation
     if (!formData.address.street || formData.address.street.length < 3) {
       newErrors['address.street'] = 'Street address must be at least 3 characters';
     }
@@ -89,7 +86,6 @@ const GymEdit = () => {
       newErrors['address.zip'] = 'Enter a valid 6-digit PIN code';
     }
 
-    // Operation hours validation
     if (formData.operation_hours.length === 0) {
       newErrors.operation_hours = 'At least one operation hour is required';
     } else {
@@ -99,12 +95,10 @@ const GymEdit = () => {
       }
     }
 
-    // Facilities validation
     if (formData.facilities.length === 0) {
       newErrors.facilities = 'Select at least one facility';
     }
 
-    // Membership charges validation
     const charges = formData.membership_charges;
     if (!charges.monthly || charges.monthly <= 0) {
       newErrors['membership_charges.monthly'] = 'Enter a valid monthly charge';
@@ -116,7 +110,6 @@ const GymEdit = () => {
       newErrors['membership_charges.yearly'] = 'Enter a valid yearly charge';
     }
 
-    // Description validation
     if (!formData.description || formData.description.length < 20) {
       newErrors.description = 'Description must be at least 20 characters';
     }
@@ -257,7 +250,6 @@ const GymEdit = () => {
 
           <div className="p-8 lg:p-12">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Gym Name</label>
                 <input
@@ -271,7 +263,6 @@ const GymEdit = () => {
                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
               </div>
 
-              {/* Phone */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Phone Number</label>
                 <input
@@ -285,7 +276,6 @@ const GymEdit = () => {
                 {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
               </div>
 
-              {/* Address */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.keys(formData.address).map((key) => (
                   <div key={key}>
@@ -309,7 +299,6 @@ const GymEdit = () => {
                 ))}
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Description</label>
                 <textarea
@@ -327,7 +316,6 @@ const GymEdit = () => {
                 )}
               </div>
 
-              {/* Facilities */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Facilities</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -348,7 +336,6 @@ const GymEdit = () => {
                 )}
               </div>
 
-              {/* Operating Hours */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Operating Hours</label>
                 {formData.operation_hours.map((entry, index) => (
@@ -403,7 +390,6 @@ const GymEdit = () => {
                 )}
               </div>
 
-              {/* Membership Charges */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {Object.keys(formData.membership_charges).map((type) => (
                   <div key={type}>

@@ -1,10 +1,11 @@
 import Membership from "../models/MembershipSchema.js";
 import Users from "../models/UserSchema.js";
 import Gym from "../models/GymSchema.js";
+import GymGoer from "../models/GoerSchema.js";
+import UserDashboard from "../models/GoerDashboardSchema.js";
 
 export const enrollUserToGym = async (req, res) => {
   try {
-    // Add null checks for req.user first
     if (!req.user) {
       console.error("🚫 No user found in request");
       return res.status(401).json({
@@ -16,12 +17,11 @@ export const enrollUserToGym = async (req, res) => {
     const user = req.user;
     const { gymId, membershipType, endDate } = req.body;
 
-    // Then check role
-    if (user.role !== 'User') {
-      console.log(`⛔ Role violation: ${user._id} (${user.role || 'no-role'})`);
+    const gymGoer = await GymGoer.findOne({ user: user._id });
+    if (!gymGoer) {
       return res.status(403).json({
         success: false,
-        message: "Only regular users can enroll"
+        message: "Only gym goers can enroll"
       });
     }
 
@@ -40,7 +40,7 @@ export const enrollUserToGym = async (req, res) => {
 
     // Check existing membership using correct field names
     const existingMembership = await Membership.findOne({ 
-      user: user._id, 
+      gymGoer: gymGoer._id, 
       gym: gymId,
       status: "Active"
     });
@@ -51,8 +51,9 @@ export const enrollUserToGym = async (req, res) => {
       });
     }
 
+    // Create new membership
     const newMembership = new Membership({
-      user: user._id,
+      gymGoer: gymGoer._id,
       gym: gymId,
       membershipType: membershipType.toLowerCase(),
       endDate: new Date(endDate)
@@ -60,15 +61,20 @@ export const enrollUserToGym = async (req, res) => {
 
     await newMembership.save();
 
-    // Update references using correct field names
-    await Users.findByIdAndUpdate(user._id, { 
-      $push: { enrolledMemberships: newMembership._id },
-      $set: { selectedGym: gymId } 
+    await GymGoer.findByIdAndUpdate(gymGoer._id, {
+      $push: { enrolledMemberships: newMembership._id }
     });
-    
-    await Gym.findByIdAndUpdate(gymId, { 
-      $push: { members: user._id, memberships: newMembership._id } 
-    });
+
+    // Update UserDashboard
+    await UserDashboard.findOneAndUpdate(
+      { userId: user._id },
+      { 
+        $set: { 
+          "userDetails.gymEnrolled": true,
+          "userDetails.gymName": gym.name
+        } 
+      }
+    );
 
     res.status(201).json({
       success: true,

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const UserDashboardSchema = new mongoose.Schema(
+const GoerDashboardSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -81,6 +81,6 @@ const UserDashboardSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const UserDashboard = mongoose.model("UserDashboard", UserDashboardSchema);
+const UserDashboard = mongoose.model("GoerDashboard", GoerDashboardSchema);
 
 export default UserDashboard;

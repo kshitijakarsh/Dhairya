@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const MembershipSchema = new mongoose.Schema({
   gymGoer: { type: mongoose.Schema.Types.ObjectId, ref: "GymGoer", required: true },
   gym: { type: mongoose.Schema.Types.ObjectId, ref: "Gym", required: true },

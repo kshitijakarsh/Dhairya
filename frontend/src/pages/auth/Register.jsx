@@ -17,7 +17,7 @@ const roles = [
     ),
   },
   {
-    id: 'User',
+    id: 'Goer',
     title: 'Gym Goer',
     description: 'Track your workouts, set goals, and monitor your progress',
     icon: (
@@ -115,7 +115,7 @@ const Register = () => {
       
       console.log("Registration response:", registeredUser);
       
-      if (registeredUser.role === 'User') {
+      if (registeredUser.role === 'Goer') {
         navigate('/profile/setup');
       } else {
         navigate('/');

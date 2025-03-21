@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const GymSchema = new mongoose.Schema({
   name: { type: String, required: true, minlength: 3 },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "GymOwner", required: true },

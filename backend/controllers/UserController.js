@@ -1,9 +1,10 @@
 import User from "../models/UserSchema.js";
+import GymGoer from "../models/GoerSchema.js"
 import cloudinary from '../utils/cloudinary.js';
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import UserDashboard from "../models/UserDashboard.js";
+import UserDashboard from "../models/GoerDashboardSchema.js"
 import Membership from "../models/MembershipSchema.js";
 
 dotenv.config();
@@ -20,7 +21,6 @@ export const registerUser = async (req, res) => {
       profileImage = uploadedImage.secure_url;
     }
 
-    // Create user with all fields
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
       name,
@@ -30,7 +30,6 @@ export const registerUser = async (req, res) => {
       profileImage
     });
 
-    // Generate token
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET_KEY,

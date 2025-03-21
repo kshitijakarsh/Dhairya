@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const OwnerDashboardSchema = new mongoose.Schema({
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "GymOwner", required: true },
     totalMembers: { type: Number, default: 0 },

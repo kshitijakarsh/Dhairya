@@ -219,7 +219,7 @@ const Search = () => {
                         View Details
                       </Link>
                       {user ? (
-                        user.role === 'User' ? (
+                        user.role === 'Goer' ? (
                           user.enrolledGyms?.includes(gym._id) ? (
                             <button
                               className="px-4 py-2.5 text-center text-white bg-gray-400 rounded-xl cursor-not-allowed font-medium"

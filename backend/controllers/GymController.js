@@ -2,15 +2,7 @@ import cloudinary from '../utils/cloudinary.js';
 import Gyms from "../models/GymSchema.js";
 import User from "../models/UserSchema.js";
 import dotenv from "dotenv";
-
 dotenv.config();
-
-const handleError = (res, error, defaultMessage = "Internal Server Error") => {
-  console.error("Error:", error);
-  const status = error.status || 500;
-  const message = error.message || defaultMessage;
-  res.status(status).json({ success: false, message });
-};
 
 export const registerGym = async (req, res) => {
   try {

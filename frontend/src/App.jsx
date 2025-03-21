@@ -70,7 +70,7 @@ function App() {
             path="/profile/setup"
             element={
               user ? (
-                user.role === "User" ? (
+                user.role === "Goer" ? (
                   <UserProfileForm />
                 ) : (
                   <Navigate to="/" replace />
@@ -84,7 +84,7 @@ function App() {
             path="/user/dashboard"
             element={
               user ? (
-                user.role === "User" ? (
+                user.role === "Goer" ? (
                   <ProfileGuard>
                     <UserDashboard />
                   </ProfileGuard>
@@ -102,7 +102,7 @@ function App() {
             path="/enroll/:gymId"
             element={
               user ? (
-                user.role === "User" ? (
+                user.role === "Goer" ? (
                   <ProfileGuard>
                     <EnrollmentForm />
                   </ProfileGuard>

@@ -1,12 +1,5 @@
 import { z } from "zod";
 
-const userSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["User", "Trainer", "Owner"], { message: "Invalid role" }),
-});
-
 const isValidTime = (time) => /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time);
 
 const operationHourSchema = z.object({
@@ -51,7 +44,6 @@ const gymSchema = z.object({
 
 export const validateGym = async (req, res, next) => {
   try {
-    // Parse all JSON fields consistently
     req.body = {
       ...req.body,
       address: JSON.parse(req.body.address),
@@ -98,27 +90,3 @@ export const validateGymUpdate = async (req, res, next) => {
   }
 };
 
-export const validateUser = (req, res, next) => {
-  try {
-    // Extract fields from form-data
-    const { name, email, password, role } = req.body;
-    const userData = { name, email, password, role };
-    
-    // Validate using zod schema
-    userSchema.parse(userData);
-    next();
-  } catch (error) {
-    res.status(400).json({ errors: error.errors });
-  }
-};
-
-const profileSchema = z.object({
-  age: z.number().min(13).max(100),
-  gender: z.enum(["male", "female", "other"]),
-  height: z.number().positive(),
-  weight: z.number().positive(),
-  fitnessGoals: z.array(z.string()),
-  programs: z.array(z.string()),
-  medicalConditions: z.string().optional(),
-  dietaryRestrictions: z.string().optional(),
-});

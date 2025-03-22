@@ -1,13 +1,13 @@
 import User from "../models/UserSchema.js";
-import GymGoer from "../models/GoerSchema.js"
 import cloudinary from '../utils/cloudinary.js';
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import UserDashboard from "../models/GoerDashboardSchema.js"
-import Membership from "../models/MembershipSchema.js";
+import GymGoer from "../models/GoerSchema.js";
 
 dotenv.config();
+
+
 
 export const registerUser = async (req, res) => {
   try {
@@ -22,6 +22,7 @@ export const registerUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = new User({
       name,
       email,
@@ -30,14 +31,25 @@ export const registerUser = async (req, res) => {
       profileImage
     });
 
+    await user.save();
+
+    let gymGoer = null;
+    if (role === "Goer") {
+      gymGoer = new GymGoer({
+        user: user._id,
+        enrolledMemberships: [],
+        userDashboard: null,
+      });
+
+      await gymGoer.save();
+    }
+
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "24h" }
     );
 
-    await user.save();
-    
     res.status(201).json({
       token,
       user: {
@@ -45,9 +57,9 @@ export const registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        profileImage: user.profileImage
+        profileImage: user.profileImage,
       },
-      message: "Registration successful"
+      message: "Registration successful",
     });
 
   } catch (error) {
@@ -55,6 +67,7 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ message: error.message || "Registration failed" });
   }
 };
+
 
 
 export const loginUser = async (req, res) => {
@@ -83,7 +96,6 @@ export const loginUser = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
-        dashboard : user.userDashboard,
         profileImage : user.profileImage
       },
     });
@@ -97,216 +109,8 @@ export const logoutUser = (req, res) => {
   res.json({ message: "Logged out successfully" });
 };
 
-export const createProfile = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const {
-      age,
-      gender,
-      height,
-      currentWeight,
-      targetWeight,
-      calorieTarget,
-      fitnessGoals,
-      programmes,
-      gymEnrolled,
-      gymName,
-      budget,
-    } = req.body;
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (user.userDashboard) {
-      return res.status(400).json({ message: "Dashboard already exists" });
-    }
-
-    const weightEntry = {
-      weight: parseFloat(currentWeight),
-      date: new Date().toISOString(),
-    };
-
-    const dashboard = new UserDashboard({
-      userId,
-      profile: {
-        age,
-        gender,
-        height,
-        fitnessGoals,
-        programs: programmes,
-      },
-      userDetails: {
-        gymEnrolled,
-        gymName: gymEnrolled ? gymName : null,
-        budget,
-      },
-      monthlyData: [weightEntry],
-      targetWeight,
-      calorieTarget,
-    });
-
-    await dashboard.save();
-
-    user.userDashboard = dashboard._id;
-    await user.save();
-
-    res.status(201).json({
-      message: "Profile created successfully",
-      dashboard,
-    });
-  } catch (error) {
-    console.error("Profile creation error:", error);
-    res.status(500).json({
-      message: "Error creating profile",
-      error: error.message,
-    });
-  }
-};
-
-export const updateProfile = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const updates = req.body;
-    console.log("📝 Received updates:", updates);
-
-    // Fetch User & Ensure Dashboard Exists
-    const user = await User.findById(userId);
-    if (!user || !user.userDashboard) {
-      return res.status(404).json({ message: "Dashboard not found" });
-    }
-
-    const dashboard = await UserDashboard.findById(user.userDashboard);
-    if (!dashboard) {
-      return res.status(404).json({ message: "Dashboard not found" });
-    }
-
-    const updateOperations = {};
-    const arrayFilters = [];
-
-    /** ✅ Handling Attendance Update */
-    if (updates.attendance) {
-      const { month, day } = updates.attendance;
-
-      // Find if the month already exists in attendance
-      const existingMonth = dashboard.attendance.find((entry) => entry.month === month);
-
-      if (existingMonth) {
-        // If month exists, add the day to it
-        updateOperations.$addToSet = {
-          "attendance.$[elem].daysPresent": day
-        };
-        arrayFilters.push({ "elem.month": month });
-      } else {
-        // If month doesn't exist, create a new month entry
-        updateOperations.$push = {
-          attendance: {
-            month: month,
-            daysPresent: [day]
-          }
-        };
-      }
-    }
-
-    /** ✅ Handling Weight Update */
-    if (updates.currentWeight) {
-      updateOperations.$push = {
-        monthlyData: {
-          weight: updates.currentWeight,
-          date: new Date().toISOString(),
-        }
-      };
-    }
-
-    /** ✅ Handling User Details Update */
-    if (updates.userDetails) {
-      for (const key in updates.userDetails) {
-        updateOperations.$set = updateOperations.$set || {};
-        updateOperations.$set[`userDetails.${key}`] = updates.userDetails[key];
-      }
-    }
-
-    updateOperations.$set = { ...updateOperations.$set, lastUpdated: Date.now() };
-
-    if (Object.keys(updateOperations).length > 0) {
-      const updateOptions = {
-        new: true,
-        runValidators: true,
-        arrayFilters: arrayFilters.length > 0 ? arrayFilters : undefined,
-      };
-
-      const updatedDashboard = await UserDashboard.findByIdAndUpdate(
-        user.userDashboard,
-        updateOperations,
-        updateOptions
-      );
-
-      console.log("✅ Dashboard update successful:", updatedDashboard);
-      return res.json({ message: "Dashboard updated", dashboard: updatedDashboard });
-    }
-
-    console.warn("⚠️ No valid updates provided");
-    return res.status(400).json({ message: "No valid updates provided" });
-
-  } catch (error) {
-    console.error("🔥 Update error:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-export const getUserDashboard = async (req, res) => {
-  
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const dashboard = await UserDashboard.findOne({ userId: user._id });
-    if (!dashboard) {
-      return res.status(404).json({ message: "Dashboard not found. Please complete your profile setup." });
-    }
-    
-    res.status(200).json({
-      success: true,
-      message: "Dashboard retrieved successfully",
-      dashboard,
-    });
-  } catch (error) {
-    console.error("Error fetching dashboard:", error);
-    res.status(500).json({ message: "Error fetching dashboard", error: error.message });
-  }
-};
-
-export const getUserEnrollments = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const user = await User.findById(userId).populate({
-      path: "memberships",
-      populate: {
-        path: "gym",
-        model: "Gym",
-      },
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({ enrolledGyms: user.enrolledMemberships });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-
 export default {
   registerUser,
   loginUser,
-  logoutUser,
-  createProfile,
-  getUserDashboard,
-  updateProfile
+  logoutUser
 };

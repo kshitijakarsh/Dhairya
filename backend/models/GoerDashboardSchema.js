@@ -50,8 +50,6 @@ const GoerDashboardSchema = new mongoose.Schema(
           ],
         },
       ],
-      medicalConditions: { type: String },
-      dietaryRestrictions: { type: String },
     },
 
     userDetails: {
@@ -81,6 +79,6 @@ const GoerDashboardSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const UserDashboard = mongoose.model("GoerDashboard", GoerDashboardSchema);
+const GoerDashboard = mongoose.model("GoerDashboard", GoerDashboardSchema);
 
-export default UserDashboard;
+export default GoerDashboard;

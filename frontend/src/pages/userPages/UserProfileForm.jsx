@@ -115,7 +115,7 @@ const UserProfileForm = () => {
       
 
       const response = await axios.post(
-        `${API_BASE_URL}/users/profile`,
+        `${API_BASE_URL}/goer/profile`,
         {
           ...formData,
           weightHistory: [weightEntry],

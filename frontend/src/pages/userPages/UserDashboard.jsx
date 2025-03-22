@@ -510,7 +510,7 @@ const UserDashboard = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-        const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`, {
+        const { data } = await axios.get(`${API_BASE_URL}/goer/dashboard`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -547,7 +547,7 @@ const UserDashboard = () => {
       });
 
       await axios.patch(
-        `${API_BASE_URL}/users/update`,
+        `${API_BASE_URL}/goer/update`,
         {
           attendance: {
             month: monthName,
@@ -566,7 +566,7 @@ const UserDashboard = () => {
       setAttendance((prev) => ({ ...prev, [dateKey]: !prev[dateKey] }));
 
       // Refresh attendance data after update
-      const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`, {
+      const { data } = await axios.get(`${API_BASE_URL}/goer/dashboard`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem(
             STORAGE_KEYS.AUTH_TOKEN
@@ -630,16 +630,16 @@ const UserDashboard = () => {
         },
       }));
 
-      await axios.patch(`${API_BASE_URL}/users/update`, updateData, {
+      await axios.patch(`${API_BASE_URL}/goer/update`, updateData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`);
+      const { data } = await axios.get(`${API_BASE_URL}/goer/dashboard`);
       setDashboard(data.dashboard);
 
       return true;
     } catch (error) {
-      const { data } = await axios.get(`${API_BASE_URL}/users/dashboard`);
+      const { data } = await axios.get(`${API_BASE_URL}/goer/dashboard`);
       setDashboard(data.dashboard);
 
       toast.error(error.response?.data?.message || "Update failed");

@@ -1,7 +1,7 @@
 import express from "express"
 import { registerGym, getMyGyms, updateGym, getGymById, searchGyms, addRating, deleteGym } from '../controllers/GymController.js';
 import { authenticateOwner, authenticateToken } from '../middleware/authMiddleware.js';
-import { validateGym, validateGymUpdate } from "../middleware/validationMiddleware.js";
+import { validateGym, validateGymUpdate } from "../middleware/gymValidationMiddleware.js";
 import upload from "../middleware/upload.js";
 const router = express.Router();
 

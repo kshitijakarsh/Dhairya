@@ -8,7 +8,7 @@ const GoerSchema = new mongoose.Schema(
     ],
     userDashboard: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "UserDashboard",
+      ref: "GoerDashboard",
     },
   },
   { timestamps: true }

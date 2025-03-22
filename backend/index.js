@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors"
 import userRouter from "./routes/userRouter.js"
 import gymRouter from "./routes/gymRouter.js"
+import goerRoutes from "./routes/goerRoutes.js"
 import membershipRoutes from "./routes/membershipRouter.js";
 import dotenv from "dotenv";
 
@@ -23,6 +24,7 @@ mongoose.connect(process.env.MONGO_URL)
 app.use('/api/users', userRouter);
 app.use('/api/gyms', gymRouter);
 app.use("/api/memberships", membershipRoutes);
+app.use("/api/goer", goerRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {

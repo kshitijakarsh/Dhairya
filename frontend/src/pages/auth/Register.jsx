@@ -111,6 +111,9 @@ const Register = () => {
         formPayload.append('profileImage', formData.profilePicture);
       }
 
+      console.log("Data sent : ", formData);
+      
+
       const registeredUser = await register(formPayload);
       
       console.log("Registration response:", registeredUser);

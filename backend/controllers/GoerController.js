@@ -106,18 +106,15 @@ export const updateProfile = async (req, res) => {
     const userId = req.user.id;
     const updates = req.body;
 
-    // Find GymGoer profile
     let gymGoer = await GymGoer.findOne({ user: userId });
     if (!gymGoer) {
       return res.status(404).json({ message: "GymGoer profile not found" });
     }
 
-    // Check if user has a dashboard
     if (!gymGoer.userDashboard) {
       return res.status(404).json({ message: "Dashboard not found" });
     }
 
-    // Fetch the user's dashboard
     const dashboardId = gymGoer.userDashboard;
     const dashboard = await GoerDashboard.findById(dashboardId);
 
@@ -125,11 +122,9 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ message: "Dashboard data missing." });
     }
 
-    // Initialize update operations
     const updateOperations = {};
     const arrayFilters = [];
 
-    // Updating attendance (if provided)
     if (updates.attendance) {
       const { month, day } = updates.attendance;
 
@@ -152,7 +147,6 @@ export const updateProfile = async (req, res) => {
       }
     }
 
-    // Updating weight logs
     if (updates.currentWeight) {
       updateOperations.$push = {
         monthlyData: {
@@ -162,7 +156,6 @@ export const updateProfile = async (req, res) => {
       };
     }
 
-    // Updating user details
     if (updates.userDetails) {
       for (const key in updates.userDetails) {
         updateOperations.$set = updateOperations.$set || {};
@@ -170,13 +163,11 @@ export const updateProfile = async (req, res) => {
       }
     }
 
-    // Updating last modified timestamp
     updateOperations.$set = {
       ...updateOperations.$set,
       lastUpdated: Date.now(),
     };
 
-    // Apply updates if there are any valid ones
     if (Object.keys(updateOperations).length > 0) {
       const updateOptions = {
         new: true,

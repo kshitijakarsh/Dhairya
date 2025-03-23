@@ -6,15 +6,18 @@ import {
 } from "../controllers/UserController.js";
 import upload from "../middleware/upload.js";
 import { validateUser } from "../middleware/goerValidationMiddleware.js";
+import { authenticateToken } from "../middleware/authMiddleware.js";
 const router = express.Router();
-
 
 router.post(
   "/register",
-  upload.single('profileImage'),
+  upload.single("profileImage"),
   validateUser,
   registerUser
 );
+router.get("/verify", authenticateToken, (req, res) => {
+  res.json({ valid: true });
+});
 
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);

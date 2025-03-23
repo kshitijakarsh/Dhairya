@@ -63,43 +63,29 @@ export const registerGym = async (req, res) => {
 
 export const getGymById = async (req, res) => {
   try {
-    const gym = await Gyms.findById(req.params.id)
-      .populate({
-        path: "owner",
-        populate: {
-          path: "user",
-          model: "User",
-          select: "name email profileImage",
-        },
-      })
-      .populate({
-        path: "memberships",
-        populate: {
-          path: "gymGoer",
-          model: "GymGoer",
-          populate: {
-            path: "user",
-            model: "User",
-            select: "name profileImage",
-          },
-        },
-      });
+    const { id } = req.params;
+    console.log('Fetching gym with ID:', id);
+
+    const gym = await Gyms.findById(id)
+      .populate('owner', 'name email')
+      .lean();
 
     if (!gym) {
       return res.status(404).json({
         success: false,
-        message: "Gym not found",
+        message: 'Gym not found'
       });
     }
 
     res.status(200).json({
       success: true,
-      data: gym,
+      data: gym
     });
   } catch (error) {
+    console.error('Error in getGymById:', error);
     res.status(500).json({
       success: false,
-      error: error.message,
+      message: error.message || 'Error fetching gym details'
     });
   }
 };

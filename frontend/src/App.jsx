@@ -14,7 +14,7 @@ import ProfileGuard from "./components/guards/ProfileGuard";
 import OwnerGuard from "./components/guards/OwnerGuard";
 import GymOwnerDashboard from "./pages/gymPages/GymOwnerDashboard";
 import GymEdit from "./pages/gymPages/GymEdit";
-import EnrollmentForm from "./pages/gymPages/EnrollmentForm"
+import EnrollmentForm from "./pages/gymPages/EnrollmentForm";
 
 function App() {
   const { user, loading } = useAuth();

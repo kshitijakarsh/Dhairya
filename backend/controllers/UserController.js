@@ -8,8 +8,6 @@ import GymOwner from "../models/OwnerSchema.js"
 
 dotenv.config();
 
-
-
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;

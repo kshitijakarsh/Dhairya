@@ -64,7 +64,6 @@ export const registerGym = async (req, res) => {
 export const getGymById = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('Fetching gym with ID:', id);
 
     const gym = await Gyms.findById(id)
       .populate('owner', 'name email')

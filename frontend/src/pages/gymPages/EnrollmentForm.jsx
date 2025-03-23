@@ -1,4 +1,3 @@
-// src/pages/EnrollmentForm.jsx
 import React, { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -49,7 +48,6 @@ const EnrollmentForm = () => {
     try {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       
-      // Date calculation
       const today = new Date();
       const endDate = new Date(today);
       switch(selectedPlan) {
@@ -58,14 +56,11 @@ const EnrollmentForm = () => {
         case 'Yearly': endDate.setFullYear(endDate.getFullYear() + 1); break;
       }
 
-      // Request payload
       const requestData = {
-        gymId: gymId, // Directly from URL params
+        gymId: gymId,
         membershipType: selectedPlan.toLowerCase(),
         endDate: endDate.toISOString().split('T')[0]
       };
-
-      console.log('📤 Enrollment Request:', requestData);
 
       const response = await axios.post(
         `${API_BASE_URL}/memberships/enroll`,
@@ -103,7 +98,6 @@ const EnrollmentForm = () => {
     >
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          {/* Header */}
           <div className="px-4 py-6 border-b border-gray-200 text-center">
             <h2 className="text-xl font-semibold text-gray-900">
               {gym.name} Membership
@@ -111,9 +105,7 @@ const EnrollmentForm = () => {
             <p className="mt-1 text-sm text-gray-500">Select your plan</p>
           </div>
 
-          {/* Content */}
           <div className="p-4 space-y-6">
-            {/* Plan Selection */}
             <div className="space-y-3">
               {plans.map((plan) => (
                 <button
@@ -159,7 +151,7 @@ const EnrollmentForm = () => {
               </motion.div>
             )} */}
 
-            {/* Submit Button */}
+            
             <button
               onClick={handleSubmit}
               disabled={loading || !selectedPlan}
@@ -183,7 +175,6 @@ const EnrollmentForm = () => {
               )}
             </button>
 
-            {/* Back Link */}
             <div className="text-center">
               <button
                 onClick={() => navigate(`/gym/${gymId}`)}

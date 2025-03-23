@@ -12,7 +12,7 @@ import UserProfileForm from "./pages/userPages/UserProfileForm";
 import UserDashboard from "./pages/userPages/UserDashboard";
 import ProfileGuard from "./components/guards/ProfileGuard";
 import OwnerGuard from "./components/guards/OwnerGuard";
-import GymOwnerDashboard from "./pages/gymPages/GymOwnerDashboard";
+import GymOwnerDashboard from "./pages/ownerPages/ownerDashboard.jsx";
 import GymEdit from "./pages/gymPages/GymEdit";
 import EnrollmentForm from "./pages/gymPages/EnrollmentForm";
 

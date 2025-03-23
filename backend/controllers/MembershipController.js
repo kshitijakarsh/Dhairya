@@ -3,11 +3,11 @@ import Users from "../models/UserSchema.js";
 import Gym from "../models/GymSchema.js";
 import GymGoer from "../models/GoerSchema.js";
 import UserDashboard from "../models/GoerDashboardSchema.js";
+import Gyms from "../models/GymSchema.js";
 
 export const enrollUserToGym = async (req, res) => {
   try {
     if (!req.user) {
-      console.error("🚫 No user found in request");
       return res.status(401).json({
         success: false,
         message: "Not authenticated"
@@ -25,7 +25,6 @@ export const enrollUserToGym = async (req, res) => {
       });
     }
 
-    // Validate request body
     if (!gymId || !membershipType || !endDate) {
       return res.status(400).json({ 
         success: false,
@@ -38,7 +37,6 @@ export const enrollUserToGym = async (req, res) => {
       return res.status(404).json({ message: "Gym not found" });
     }
 
-    // Check existing membership using correct field names
     const existingMembership = await Membership.findOne({ 
       gymGoer: gymGoer._id, 
       gym: gymId,
@@ -51,7 +49,6 @@ export const enrollUserToGym = async (req, res) => {
       });
     }
 
-    // Create new membership
     const newMembership = new Membership({
       gymGoer: gymGoer._id,
       gym: gymId,
@@ -65,7 +62,6 @@ export const enrollUserToGym = async (req, res) => {
       $push: { enrolledMemberships: newMembership._id }
     });
 
-    // Update UserDashboard
     await UserDashboard.findOneAndUpdate(
       { userId: user._id },
       { 
@@ -75,6 +71,12 @@ export const enrollUserToGym = async (req, res) => {
         } 
       }
     );
+
+    await Gyms.findByIdAndUpdate(gymId, {
+      $push: {
+        memberships: gymGoer._id
+      }
+    });
 
     res.status(201).json({
       success: true,

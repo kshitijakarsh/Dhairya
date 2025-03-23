@@ -5,7 +5,6 @@ import GoerDashboard from "../models/GoerDashboardSchema.js";
 export const createProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    console.log(userId);
 
     const {
       age,
@@ -181,7 +180,6 @@ export const updateProfile = async (req, res) => {
         updateOptions
       );
 
-      console.log("✅ Dashboard update successful:", updatedDashboard);
       return res.json({
         message: "Dashboard updated successfully",
         dashboard: updatedDashboard,

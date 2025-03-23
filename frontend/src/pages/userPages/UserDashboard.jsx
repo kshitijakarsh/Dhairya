@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
-import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import {
   Chart as ChartJS,
@@ -12,7 +11,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { motion } from "framer-motion";
 import axios from "axios";
 import { API_BASE_URL, STORAGE_KEYS } from "../../constants";
 import { useAuth } from "../../contexts/AuthContext";
@@ -503,7 +501,7 @@ const UserDashboard = () => {
     monthlyData: [],
     calorieTarget: null,
     targetWeight: null,
-    userDetails: { budget: "", gymEnrolled: false, gymName: "" },
+    userDetails: { gymEnrolled: false, gymName: "" },
   });
 
   useEffect(() => {
@@ -647,6 +645,18 @@ const UserDashboard = () => {
     }
   };
 
+  const formatMemberDate = (createdAt) => {
+    if (!createdAt) return "Unknown";
+    try {
+      return new Date(createdAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long"
+      });
+    } catch (error) {
+      return "Unknown";
+    }
+  };
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
@@ -659,7 +669,7 @@ const UserDashboard = () => {
 
   const { currentWeight, targetWeight, weightDifference } = getWeightMetrics();
   const { age, gender, fitnessGoals, programs } = dashboard.profile;
-  const { budget, gymEnrolled, gymName } = dashboard.userDetails;
+  const { gymEnrolled, gymName } = dashboard.userDetails;
 
   console.log("Profile Image URL:", user?.profileImage);
 
@@ -671,20 +681,18 @@ const UserDashboard = () => {
           <div className="flex flex-col md:flex-row items-start gap-6">
             {/* Profile Image Section */}
             <div className="relative group">
-              <div className="w-24 h-24 rounded-full border-4 border-white/20 shadow-lg overflow-hidden transition-all duration-300 group-hover:border-white/40">
+              <div className="w-24 h-24 rounded-full border-4 border-white/20 shadow-lg overflow-hidden">
                 <img
                   src={dashboard.profileImage || user?.profileImage}
                   alt="Profile"
-                  className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-110"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     e.target.style.display = "none";
-                    const fallback =
-                      e.target.parentElement.querySelector(".fallback");
+                    const fallback = e.target.parentElement.querySelector(".fallback");
                     if (fallback) fallback.style.display = "flex";
                   }}
                 />
               </div>
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"></div>
               <div className="fallback hidden w-full h-full bg-slate-700 absolute top-0 left-0 items-center justify-center">
                 <span className="text-2xl font-bold text-white">
                   {user?.name?.charAt(0).toUpperCase() || "U"}
@@ -692,35 +700,37 @@ const UserDashboard = () => {
               </div>
             </div>
 
-            {/* User Info */}
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold flex items-center gap-3">
-                {user?.name || "Fitness Enthusiast"}
-                <span className="text-xl">👋</span>
-              </h1>
-              <div className="mt-2 space-y-1">
-                <p className="text-slate-100">
-                  {age} years •{" "}
-                  {gender?.charAt(0).toUpperCase() + gender?.slice(1)}
-                </p>
-                <p className="text-slate-200 text-sm">
-                  Member since{" "}
-                  {new Date(user?.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                  })}
-                </p>
+            {/* User Info and Gym Status - Updated Layout */}
+            <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between w-full">
+              <div>
+                <h1 className="text-3xl font-bold">
+                  {user?.name || "Fitness Enthusiast"}
+                </h1>
+                <div className="mt-2">
+                  <p className="text-slate-100">
+                    {age} years • {gender?.charAt(0).toUpperCase() + gender?.slice(1)}
+                  </p>
+                  <p className="text-slate-200 text-sm">
+                    Member since {formatMemberDate(dashboard?.createdAt)}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Date Display */}
-            <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg mt-4 md:mt-0 self-start">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {/* Gym Enrollment Status - Single Line Layout */}
+              <div className="mt-4 md:mt-0">
+                <div className="bg-white/10 backdrop-blur-sm px-6 py-3 rounded-lg border border-white/20">
+                  {gymEnrolled ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-300 font-medium">Enrolled At:</span>
+                      <span className="text-white font-semibold">{gymName}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <span className="text-white font-medium">No Enrollments</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </Card>
@@ -817,21 +827,6 @@ const UserDashboard = () => {
           </div>
         </Card>
 
-        {/* Goals and Programs */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ListSection
-            title="Your Fitness Goals"
-            items={fitnessGoals}
-            icon={Icons.Trophy}
-          />
-          <ListSection
-            title="Your Training Programs"
-            items={programs}
-            icon={Icons.Activity}
-          />
-        </div>
-
-        {/* Attendance Calendar */}
         <Card className="p-6 hover:shadow-lg transition-shadow">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
             <Icons.Calendar />
@@ -848,22 +843,6 @@ const UserDashboard = () => {
             ))}
           </div>
         </Card>
-
-        {/* User Details */}
-        {dashboard.userDetails && (
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <Icons.User />
-              Additional Details
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetailItem label="Budget Range" value={budget} />
-              {gymEnrolled && (
-                <DetailItem label="Enrolled Gym" value={gymName} />
-              )}
-            </div>
-          </Card>
-        )}
       </div>
     </div>
   );

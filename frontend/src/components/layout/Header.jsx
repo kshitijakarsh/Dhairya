@@ -55,7 +55,7 @@ const Header = () => {
               <div className="flex items-center space-x-6">
                 {user.role === 'Owner' ? (
                   <>
-                    <NavLink to={ROUTES.OWNER_DASHBOARD}>My Gyms</NavLink>
+                    <NavLink to={ROUTES.OWNER_DASHBOARD}>Dashboard</NavLink>
                     <NavLink to={ROUTES.REGISTER_GYM}>Register Gym</NavLink>
                   </>
                 ) : (

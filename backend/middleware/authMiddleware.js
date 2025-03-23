@@ -33,7 +33,6 @@ export const authenticateOwner = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    console.log("Decoded Token:", decoded);
 
     const user = await Users.findById(decoded.id);
     if (!user) {

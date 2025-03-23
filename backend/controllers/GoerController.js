@@ -106,23 +106,30 @@ export const updateProfile = async (req, res) => {
     const userId = req.user.id;
     const updates = req.body;
 
+    // Find GymGoer profile
     let gymGoer = await GymGoer.findOne({ user: userId });
     if (!gymGoer) {
       return res.status(404).json({ message: "GymGoer profile not found" });
     }
 
-    if (!gymGoer || !gymGoer.userDashboard) {
+    // Check if user has a dashboard
+    if (!gymGoer.userDashboard) {
       return res.status(404).json({ message: "Dashboard not found" });
     }
 
-    const dashboard = await GymGoer.findOne({ dashboard: dashboard._id });
+    // Fetch the user's dashboard
+    const dashboardId = gymGoer.userDashboard;
+    const dashboard = await GoerDashboard.findById(dashboardId);
+
     if (!dashboard) {
-      return res.status(404).json({ message: "Dashboard not found" });
+      return res.status(404).json({ message: "Dashboard data missing." });
     }
 
+    // Initialize update operations
     const updateOperations = {};
     const arrayFilters = [];
 
+    // Updating attendance (if provided)
     if (updates.attendance) {
       const { month, day } = updates.attendance;
 
@@ -145,6 +152,7 @@ export const updateProfile = async (req, res) => {
       }
     }
 
+    // Updating weight logs
     if (updates.currentWeight) {
       updateOperations.$push = {
         monthlyData: {
@@ -154,6 +162,7 @@ export const updateProfile = async (req, res) => {
       };
     }
 
+    // Updating user details
     if (updates.userDetails) {
       for (const key in updates.userDetails) {
         updateOperations.$set = updateOperations.$set || {};
@@ -161,11 +170,13 @@ export const updateProfile = async (req, res) => {
       }
     }
 
+    // Updating last modified timestamp
     updateOperations.$set = {
       ...updateOperations.$set,
       lastUpdated: Date.now(),
     };
 
+    // Apply updates if there are any valid ones
     if (Object.keys(updateOperations).length > 0) {
       const updateOptions = {
         new: true,
@@ -173,21 +184,22 @@ export const updateProfile = async (req, res) => {
         arrayFilters: arrayFilters.length > 0 ? arrayFilters : undefined,
       };
 
-      const updatedDashboard = await UserDashboard.findByIdAndUpdate(
-        user.userDashboard,
+      const updatedDashboard = await GoerDashboard.findByIdAndUpdate(
+        dashboardId,
         updateOperations,
         updateOptions
       );
 
       console.log("✅ Dashboard update successful:", updatedDashboard);
       return res.json({
-        message: "Dashboard updated",
+        message: "Dashboard updated successfully",
         dashboard: updatedDashboard,
       });
     }
 
     console.warn("⚠️ No valid updates provided");
     return res.status(400).json({ message: "No valid updates provided" });
+
   } catch (error) {
     console.error("🔥 Update error:", error);
     return res

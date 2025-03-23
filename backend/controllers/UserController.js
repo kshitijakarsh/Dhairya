@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import GymGoer from "../models/GoerSchema.js";
+import GymOwner from "../models/OwnerSchema.js"
 
 dotenv.config();
 
@@ -33,15 +34,22 @@ export const registerUser = async (req, res) => {
 
     await user.save();
 
-    let gymGoer = null;
     if (role === "Goer") {
-      gymGoer = new GymGoer({
+      const gymGoer = new GymGoer({
         user: user._id,
         enrolledMemberships: [],
         userDashboard: null,
       });
 
       await gymGoer.save();
+    } else if(role === "Owner"){
+      const gymOwner = new GymOwner({
+        user: user._id,
+        gyms: [],
+        dashboard : null
+      })
+
+      await gymOwner.save();
     }
 
     const token = jwt.sign(
@@ -108,6 +116,7 @@ export const loginUser = async (req, res) => {
 export const logoutUser = (req, res) => {
   res.json({ message: "Logged out successfully" });
 };
+
 
 export default {
   registerUser,

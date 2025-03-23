@@ -1,6 +1,6 @@
-import cloudinary from '../utils/cloudinary.js';
+import cloudinary from "../utils/cloudinary.js";
 import Gyms from "../models/GymSchema.js";
-import User from "../models/UserSchema.js";
+import GymOwner from "../models/OwnerSchema.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -8,20 +8,21 @@ export const registerGym = async (req, res) => {
   try {
     const validatedData = req.validatedGym;
     const { owner, name } = validatedData;
+    
+    const existingOwner = await GymOwner.findOne({user : owner});
 
-    const existingOwner = await User.findById(owner);
     if (!existingOwner) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Owner not found" 
+      return res.status(404).json({
+        success: false,
+        message: "Owner not found",
       });
     }
 
     const existingGym = await Gyms.findOne({ name, owner });
     if (existingGym) {
-      return res.status(409).json({ 
-        success: false, 
-        message: "You already have a gym registered with this name" 
+      return res.status(409).json({
+        success: false,
+        message: "You already have a gym registered with this name",
       });
     }
 
@@ -29,71 +30,76 @@ export const registerGym = async (req, res) => {
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         const uploadedImage = await cloudinary.uploader.upload(file.path, {
-          folder: 'gym_images',
+          folder: "gym_images",
         });
         imageUrls.push(uploadedImage.secure_url);
       }
-      console.log("✅ Uploaded Gym Images:", imageUrls);
     }
 
     const gym = new Gyms({
       ...validatedData,
-      images: imageUrls
+      images: imageUrls,
     });
 
     await gym.save();
 
-    res.status(201).json({ 
-      success: true, 
-      message: "Gym registered successfully", 
-      data: gym 
-    });
+    existingOwner.gyms.push(gym._id);
+    await existingOwner.save();
 
+    res.status(201).json({
+      success: true,
+      message: "Gym registered successfully",
+      data: gym,
+    });
   } catch (error) {
-    handleError(res, error, "Error registering gym");
+    console.error("🔥 Error registering gym:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error registering gym",
+      error: error.message,
+    });
   }
 };
-
 
 export const getGymById = async (req, res) => {
   try {
     const gym = await Gyms.findById(req.params.id)
       .populate({
-        path: 'owner',
+        path: "owner",
         populate: {
-          path: 'user',
-          model: 'User',
-          select: 'name email profileImage'
-        }
+          path: "user",
+          model: "User",
+          select: "name email profileImage",
+        },
       })
       .populate({
-        path: 'memberships',
+        path: "memberships",
         populate: {
-          path: 'gymGoer',
-          model: 'GymGoer',
+          path: "gymGoer",
+          model: "GymGoer",
           populate: {
-            path: 'user',
-            model: 'User',
-            select: 'name profileImage'
-          }
-        }
+            path: "user",
+            model: "User",
+            select: "name profileImage",
+          },
+        },
       });
 
     if (!gym) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Gym not found" 
+        message: "Gym not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      data: gym
+      data: gym,
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: error.message 
+      error: error.message,
     });
   }
 };
@@ -101,12 +107,12 @@ export const getGymById = async (req, res) => {
 export const getMyGyms = async (req, res) => {
   try {
     const gyms = await Gyms.find({ owner: req.user._id })
-      .select('-ratings')
+      .select("-ratings")
       .sort({ createdAt: -1 });
 
-    res.json({ 
-      success: true, 
-      data: gyms 
+    res.json({
+      success: true,
+      data: gyms,
     });
   } catch (error) {
     handleError(res, error, "Error fetching your gyms");
@@ -116,7 +122,7 @@ export const getMyGyms = async (req, res) => {
 export const updateGym = async (req, res) => {
   try {
     const validatedData = req.validatedGym;
-    
+
     const gym = await Gyms.findOneAndUpdate(
       { _id: req.params.id, owner: req.user._id },
       validatedData,
@@ -124,16 +130,16 @@ export const updateGym = async (req, res) => {
     );
 
     if (!gym) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Gym not found or you don't have permission to update it" 
+      return res.status(404).json({
+        success: false,
+        message: "Gym not found or you don't have permission to update it",
       });
     }
 
-    res.json({ 
-      success: true, 
-      message: "Gym updated successfully", 
-      data: gym 
+    res.json({
+      success: true,
+      message: "Gym updated successfully",
+      data: gym,
     });
   } catch (error) {
     handleError(res, error, "Error updating gym");
@@ -147,7 +153,7 @@ export const addRating = async (req, res) => {
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({
         success: false,
-        message: "Rating must be between 1 and 5"
+        message: "Rating must be between 1 and 5",
       });
     }
 
@@ -155,25 +161,25 @@ export const addRating = async (req, res) => {
     if (!gym) {
       return res.status(404).json({
         success: false,
-        message: "Gym not found"
+        message: "Gym not found",
       });
     }
 
     const existingRating = gym.ratings.find(
-      r => r.user.toString() === req.user._id.toString()
+      (r) => r.user.toString() === req.user._id.toString()
     );
 
     if (existingRating) {
       return res.status(409).json({
         success: false,
-        message: "You have already rated this gym"
+        message: "You have already rated this gym",
       });
     }
 
     gym.ratings.push({
       user: req.user._id,
       rating,
-      comment: comment || ""
+      comment: comment || "",
     });
 
     await gym.save();
@@ -181,7 +187,7 @@ export const addRating = async (req, res) => {
     res.json({
       success: true,
       message: "Rating added successfully",
-      data: gym
+      data: gym,
     });
   } catch (error) {
     handleError(res, error, "Error adding rating");
@@ -191,54 +197,59 @@ export const addRating = async (req, res) => {
 export const searchGyms = async (req, res) => {
   try {
     const { query } = req.query;
-    if (!query || query.trim() === '') {
+    if (!query || query.trim() === "") {
       const allGyms = await Gyms.find({})
-        .select('name address facilities membership_charges')
+        .select("name address facilities membership_charges")
         .sort({ created_at: -1 })
         .limit(20)
         .lean();
       return res.json(allGyms);
     }
 
-    const searchRegex = new RegExp(query.trim(), 'i');
-    
+    const searchRegex = new RegExp(query.trim(), "i");
+
     const gyms = await Gyms.find({
       $or: [
         { name: searchRegex },
-        { 'address.city': searchRegex },
-        { 'address.state': searchRegex },
-        { 'address.street': searchRegex },
+        { "address.city": searchRegex },
+        { "address.state": searchRegex },
+        { "address.street": searchRegex },
         { facilities: { $in: [searchRegex] } },
-        { description: searchRegex }
-      ]
+        { description: searchRegex },
+      ],
     })
-    .select('name address facilities membership_charges images')
-    .sort({ created_at: -1 }) 
-    .limit(50)
-    .lean();
+      .select("name address facilities membership_charges images")
+      .sort({ created_at: -1 })
+      .limit(50)
+      .lean();
 
     if (gyms.length === 0) {
       const fuzzyResults = await Gyms.find({
         $or: [
-          { name: { $regex: query.split('').join('.*'), $options: 'i' } },
-          { 'address.city': { $regex: query.split('').join('.*'), $options: 'i' } },
-          { facilities: { $regex: query.split('').join('.*'), $options: 'i' } }
-        ]
+          { name: { $regex: query.split("").join(".*"), $options: "i" } },
+          {
+            "address.city": {
+              $regex: query.split("").join(".*"),
+              $options: "i",
+            },
+          },
+          { facilities: { $regex: query.split("").join(".*"), $options: "i" } },
+        ],
       })
-      .select('name address facilities membership_charges')
-      .sort({ created_at: -1 }) 
-      .limit(20)
-      .lean();
-      
+        .select("name address facilities membership_charges")
+        .sort({ created_at: -1 })
+        .limit(20)
+        .lean();
+
       return res.json(fuzzyResults);
     }
 
     res.json(gyms);
   } catch (error) {
-    console.error('Search error:', error);
-    res.status(500).json({ 
+    console.error("Search error:", error);
+    res.status(500).json({
       message: "Error searching gyms",
-      error: error.message 
+      error: error.message,
     });
   }
 };
@@ -247,19 +258,19 @@ export const deleteGym = async (req, res) => {
   try {
     const gym = await Gyms.findOneAndDelete({
       _id: req.params.id,
-      owner: req.user._id
+      owner: req.user._id,
     });
 
     if (!gym) {
       return res.status(404).json({
         success: false,
-        message: "Gym not found or you don't have permission to delete it"
+        message: "Gym not found or you don't have permission to delete it",
       });
     }
 
     res.json({
       success: true,
-      message: "Gym deleted successfully"
+      message: "Gym deleted successfully",
     });
   } catch (error) {
     handleError(res, error, "Error deleting gym");
@@ -273,5 +284,5 @@ export default {
   updateGym,
   addRating,
   searchGyms,
-  deleteGym
+  deleteGym,
 };

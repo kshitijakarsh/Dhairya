@@ -273,12 +273,29 @@ const GymOwnerDashboard = () => {
       totalGyms: 0,
       dailyCheckIns: 145,
     },
-    memberGrowth: MOCK_CHART_DATA.memberGrowth,
+    memberGrowth: {
+      labels: [],
+      datasets: [
+        {
+          label: "Total Members",
+          data: [],
+          borderColor: "rgb(0, 0, 0)",
+          backgroundColor: "rgba(0, 0, 0, 0.1)",
+          tension: 0.4,
+          fill: true,
+        },
+      ],
+    },
     peakHours: MOCK_CHART_DATA.peakHours,
     membershipDistribution: MOCK_CHART_DATA.membershipDistribution,
     activities: MOCK_ACTIVITIES,
     insights: MOCK_INSIGHTS,
     gymDetails: [],
+    membershipBreakdown: {
+      monthly: 0,
+      half_yearly: 0,
+      yearly: 0
+    }
   });
 
   useEffect(() => {
@@ -291,8 +308,28 @@ const GymOwnerDashboard = () => {
         });
 
         if (response.data.success) {
-          const { totalMembers, totalRevenue, totalGyms, gyms } = response.data;
-          console.log(totalMembers, totalRevenue, totalGyms, gyms);
+          const { 
+            totalMembers, 
+            totalRevenue, 
+            totalGyms, 
+            gyms, 
+            membershipBreakdown,
+            monthlyMemberships 
+          } = response.data;
+          
+          console.log("Dashboard Data:", response.data);
+
+          // Process monthly data
+          // Sort months chronologically
+          const sortedMonths = Object.keys(monthlyMemberships).sort((a, b) => {
+            return new Date(a) - new Date(b);
+          });
+
+          // Get member counts for each month
+          const monthlyData = sortedMonths.map(month => ({
+            month,
+            count: monthlyMemberships[month].length
+          }));
 
           setDashboardData((prev) => ({
             ...prev,
@@ -303,6 +340,28 @@ const GymOwnerDashboard = () => {
               totalGyms,
             },
             gymDetails: gyms,
+            membershipBreakdown: membershipBreakdown || {
+              monthly: 0,
+              half_yearly: 0,
+              yearly: 0
+            },
+            memberGrowth: {
+              labels: monthlyData.map(data => data.month),
+              datasets: [
+                {
+                  label: "Total Members",
+                  data: monthlyData.map(data => data.count),
+                  borderColor: "rgb(0, 0, 0)",
+                  backgroundColor: "rgba(0, 0, 0, 0.1)",
+                  tension: 0.4,
+                  fill: true,
+                  pointRadius: 6,
+                  pointBackgroundColor: "rgb(0, 0, 0)",
+                  pointBorderColor: "white",
+                  pointBorderWidth: 2,
+                },
+              ],
+            }
           }));
         }
       } catch (error) {
@@ -412,55 +471,140 @@ const GymOwnerDashboard = () => {
             </div>
 
             {/* Charts Section */}
-            <div className="bg-white rounded-2xl shadow-sm p-8">
-              <h3 className="text-xl font-semibold mb-6">Member Growth</h3>
-              <div className="h-[400px]">
-                <Line
-                  key="memberGrowth"
-                  data={{
-                    ...dashboardData.memberGrowth,
-                    datasets: [
-                      {
-                        ...dashboardData.memberGrowth.datasets[0],
-                        borderColor: "rgb(0, 0, 0)",
-                        backgroundColor: "rgba(0, 0, 0, 0.1)",
-                        borderWidth: 2,
-                      },
-                    ],
-                  }}
-                  options={{
-                    ...chartOptions,
-                    plugins: {
-                      ...chartOptions.plugins,
-                      legend: {
-                        display: false,
-                      },
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        grid: {
-                          color: "rgba(0, 0, 0, 0.05)",
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Member Growth Chart */}
+              <div className="bg-white rounded-2xl shadow-sm p-8">
+                <h3 className="text-xl font-semibold mb-6">Member Growth</h3>
+                <div className="h-[400px]">
+                  <Line
+                    key="memberGrowth"
+                    data={dashboardData.memberGrowth}
+                    options={{
+                      ...chartOptions,
+                      plugins: {
+                        ...chartOptions.plugins,
+                        legend: {
+                          display: false,
                         },
-                        ticks: {
-                          font: {
-                            weight: '500'
+                        tooltip: {
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          padding: 12,
+                          titleFont: {
+                            size: 14,
+                            weight: '600'
+                          },
+                          bodyFont: {
+                            size: 13
+                          },
+                          callbacks: {
+                            title: (tooltipItems) => {
+                              return tooltipItems[0].label;
+                            },
+                            label: (context) => {
+                              return `New Members: ${context.raw.toLocaleString()}`;
+                            }
                           }
                         }
                       },
-                      x: {
-                        grid: {
-                          display: false
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            color: "rgba(0, 0, 0, 0.05)",
+                          },
+                          ticks: {
+                            font: {
+                              weight: '500'
+                            },
+                            callback: (value) => value.toLocaleString()
+                          },
+                          title: {
+                            display: true,
+                            text: 'Number of New Members',
+                            font: {
+                              weight: '500'
+                            }
+                          }
                         },
-                        ticks: {
-                          font: {
-                            weight: '500'
+                        x: {
+                          grid: {
+                            display: false
+                          },
+                          ticks: {
+                            font: {
+                              weight: '500'
+                            },
+                            maxRotation: 45,
+                            minRotation: 45
                           }
                         }
                       }
-                    }
-                  }}
-                />
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Membership Distribution Chart */}
+              <div className="bg-white rounded-2xl shadow-sm p-8">
+                <h3 className="text-xl font-semibold mb-6">Membership Distribution</h3>
+                <div className="h-[400px] flex items-center justify-center">
+                  <Pie
+                    key="membershipDistribution"
+                    data={{
+                      labels: ['Monthly', 'Half Yearly', 'Yearly'],
+                      datasets: [{
+                        data: [
+                          dashboardData.membershipBreakdown.monthly,
+                          dashboardData.membershipBreakdown.half_yearly,
+                          dashboardData.membershipBreakdown.yearly
+                        ],
+                        backgroundColor: [
+                          'rgba(0, 0, 0, 0.8)',
+                          'rgba(0, 0, 0, 0.5)',
+                          'rgba(0, 0, 0, 0.3)'
+                        ],
+                        borderColor: 'white',
+                        borderWidth: 2
+                      }]
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                          labels: {
+                            font: {
+                              weight: '500'
+                            },
+                            padding: 20,
+                            generateLabels: (chart) => {
+                              const datasets = chart.data.datasets[0];
+                              const total = datasets.data.reduce((a, b) => a + b, 0);
+                              
+                              return chart.data.labels.map((label, i) => ({
+                                text: `${label}: ${datasets.data[i]} (${((datasets.data[i] / total) * 100).toFixed(1)}%)`,
+                                fillStyle: datasets.backgroundColor[i],
+                                hidden: false,
+                                index: i
+                              }));
+                            }
+                          }
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: (context) => {
+                              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                              const value = context.raw;
+                              const percentage = ((value / total) * 100).toFixed(1);
+                              return `${context.label}: ${value} members (${percentage}%)`;
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>

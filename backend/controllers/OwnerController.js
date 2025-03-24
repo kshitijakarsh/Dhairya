@@ -3,12 +3,9 @@ import Gyms from "../models/GymSchema.js";
 import Memberships from "../models/MembershipSchema.js";
 
 export const getGymStats = async (req, res) => {
-  console.log("request recieved", req.user.id);
   
   try {
-    const owner  = req.user.id;
-    console.log(owner);
-    
+    const owner = req.user.id;
 
     const existingOwner = await GymOwner.findOne({ user: owner });
     if (!existingOwner) {
@@ -29,10 +26,12 @@ export const getGymStats = async (req, res) => {
 
     let totalMembers = 0;
     let totalRevenue = 0;
+    let membershipCount = { monthly: 0, half_yearly: 0, yearly: 0 };
+    let monthlyMemberships = {}; 
     let gymDetails = [];
 
     for (const gym of gyms) {
-      const membershipCharges = gym.membership_charges || {};
+      const membershipCharges = gym.membership_charges || {}; 
       let gymRevenue = 0;
 
       const members = await Memberships.find({ 
@@ -43,11 +42,25 @@ export const getGymStats = async (req, res) => {
       totalMembers += members.length;
 
       for (const member of members) {
-        const chargeKey = member.membershipType
-          .replace(" ", "_") 
-          .toLowerCase();
+        const chargeKey = member.membershipType.replace(" ", "_").toLowerCase(); 
         const planCost = membershipCharges[chargeKey] || 0;
         gymRevenue += planCost;
+
+        if (membershipCount[chargeKey] !== undefined) {
+          membershipCount[chargeKey]++;
+        }
+
+        const startMonth = new Date(member.startDate).toLocaleString("default", { month: "long", year: "numeric" });
+
+        if (!monthlyMemberships[startMonth]) {
+          monthlyMemberships[startMonth] = [];
+        }
+        monthlyMemberships[startMonth].push({
+          memberId: member._id,
+          gymId: gym._id,
+          membershipType: member.membershipType,
+          startDate: member.startDate,
+        });
       }
 
       totalRevenue += gymRevenue;
@@ -64,6 +77,8 @@ export const getGymStats = async (req, res) => {
       totalGyms: gyms.length,
       totalMembers,
       totalRevenue,
+      membershipBreakdown: membershipCount,
+      monthlyMemberships,
       gyms: gymDetails,
     });
 
@@ -75,6 +90,8 @@ export const getGymStats = async (req, res) => {
     });
   }
 };
+
+
 
 export default {
   getGymStats,

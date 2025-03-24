@@ -5,6 +5,8 @@ import userRouter from "./routes/userRouter.js"
 import gymRouter from "./routes/gymRouter.js"
 import goerRoutes from "./routes/goerRoutes.js"
 import membershipRoutes from "./routes/membershipRouter.js";
+import ownerRoutes from "./routes/ownerRoutes.js"
+import "./jobs/cronJobs.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -22,6 +24,7 @@ app.use('/api/users', userRouter);
 app.use('/api/gyms', gymRouter);
 app.use("/api/memberships", membershipRoutes);
 app.use("/api/goer", goerRoutes)
+app.use("/api/owner", ownerRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

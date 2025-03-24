@@ -1,10 +1,8 @@
 import express from "express"
 import { authenticateOwner } from '../middleware/authMiddleware.js';
-import { getAllMembers, getTotalRevenue} from "../controllers/OwnerController.js"
+import { getGymStats } from "../controllers/OwnerController.js"
 const router = express.Router();
 
-router.get('/members', authenticateOwner, getAllMembers);
-router.get('/revenue', authenticateOwner, getTotalRevenue);
-
+router.get('/dash', authenticateOwner, getGymStats);
 
 export default router;

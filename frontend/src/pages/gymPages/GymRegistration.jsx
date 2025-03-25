@@ -259,13 +259,13 @@ const GymRegistration = () => {
       }
 
       const response = await axios.post(
-        `${API_BASE_URL}/gyms/register`,
+        `${API_BASE_URL}/owner/register`,
         formPayload,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
         }
       );
 

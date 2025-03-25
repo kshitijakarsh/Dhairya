@@ -45,7 +45,7 @@ const GymEdit = () => {
       if (!token) throw new Error('Please login to edit gym');
 
       const response = await axios.get(
-        `${API_BASE_URL}/gyms/${id}`,
+        `${API_BASE_URL}/owner/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -194,21 +194,15 @@ const GymEdit = () => {
       const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       if (!token) throw new Error('Please login to update gym');
 
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const payload = {
-        ...formData,
-        membership_charges: {
-          monthly: Number(formData.membership_charges.monthly),
-          half_yearly: Number(formData.membership_charges.half_yearly),
-          yearly: Number(formData.membership_charges.yearly)
-        }
-      };
-
       const response = await axios.put(
-        `${API_BASE_URL}/gyms/${id}`,
-        payload,
-        { headers }
+        `${API_BASE_URL}/owner/${id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
 
       if (response.data.success) {

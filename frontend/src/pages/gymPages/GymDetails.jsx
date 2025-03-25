@@ -29,18 +29,50 @@ const GymDetails = () => {
     const fetchGymDetails = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/gyms/view/${id}`);
-        setGym(response.data.data || response.data);
+        setError(""); // Reset error state
+        
+        // Add timeout to the request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const response = await axios.get(
+          `${API_BASE_URL}/gyms/view/${id}`,
+          {
+            signal: controller.signal,
+            // Remove auth header since this is a public route
+          }
+        );
+
+        clearTimeout(timeoutId);
+
+        if (response.data.success) {
+          setGym(response.data.data);
+        } else {
+          setError(response.data.message || "Failed to load gym details");
+        }
       } catch (error) {
         console.error("Error fetching gym details:", error);
-        setError("Failed to load gym details");
+        if (error.name === 'AbortError') {
+          setError("Request timed out. Please try again.");
+        } else if (error.response?.status === 404) {
+          setError("Gym not found");
+        } else {
+          setError(error.response?.data?.message || "Failed to load gym details");
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchGymDetails();
-  }, [id]);
+    if (id) { // Only check for ID since we don't need auth
+      fetchGymDetails();
+    }
+    
+    return () => {
+      setGym(null); // Cleanup on unmount
+      setError("");
+    };
+  }, [id]); // Remove user.token dependency since we don't need auth
 
   if (loading) {
     return (
@@ -49,6 +81,7 @@ const GymDetails = () => {
       </div>
     );
   }
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen px-4">
@@ -89,27 +122,47 @@ const GymDetails = () => {
     });
   };
 
+  const formatMembershipType = (type) => {
+    // For display: Convert to Title Case
+    if (type.includes('_')) {
+      return type.split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
+  const transformMembershipType = (type) => {
+    // For backend: Convert to lowercase with underscore
+    return type.toLowerCase().replace(' ', '_');
+  };
+
   const handleEnrollment = () => {
+    const plans = [
+      {
+        type: "Monthly",
+        backendType: "monthly",
+        price: gym.membership_charges.monthly,
+        desc: "Pay month-to-month",
+      },
+      {
+        type: "Half Yearly",
+        backendType: "half_yearly",
+        price: gym.membership_charges.half_yearly,
+        desc: "Save up to 20%",
+      },
+      {
+        type: "Yearly",
+        backendType: "yearly",
+        price: gym.membership_charges.yearly,
+        desc: "Up to 4 members",
+      },
+    ];
+
     navigate(`/enroll/${id}`, {
       state: {
         gym: gym,
-        plans: [
-          {
-            type: "Monthly",
-            price: gym.membership_charges.monthly,
-            desc: "Pay month-to-month",
-          },
-          {
-            type: "Half Yearly",
-            price: gym.membership_charges.half_yearly,
-            desc: "Save up to 20%",
-          },
-          {
-            type: "Yearly",
-            price: gym.membership_charges.yearly,
-            desc: "Up to 4 members",
-          },
-        ],
+        plans: plans,
       },
     });
   };
@@ -323,16 +376,19 @@ const GymDetails = () => {
                 {[
                   {
                     type: "Monthly",
+                    backendType: "monthly",
                     price: gym.membership_charges.monthly,
                     desc: "Pay month-to-month",
                   },
                   {
                     type: "Half Yearly",
+                    backendType: "half_yearly",
                     price: gym.membership_charges.half_yearly,
                     desc: "Save up to 20%",
                   },
                   {
                     type: "Yearly",
+                    backendType: "yearly",
                     price: gym.membership_charges.yearly,
                     desc: "Up to 4 members",
                   },
@@ -349,7 +405,7 @@ const GymDetails = () => {
                       <p className="text-xs text-gray-500">{plan.desc}</p>
                     </div>
                     <span className="text-lg font-bold text-gray-900">
-                      ₹{plan.price}
+                      ₹{plan.price?.toLocaleString() || 0}
                     </span>
                   </motion.div>
                 ))}

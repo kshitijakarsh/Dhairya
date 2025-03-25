@@ -25,7 +25,6 @@ function App() {
     <div className="min-h-screen bg-white">
       <Routes>
         <Route element={<Layout />}>
-          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route
             path="login"
@@ -38,7 +37,6 @@ function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/gym/:id" element={<GymDetails />} />
 
-          {/* Owner Protected Routes */}
           <Route
             path="/dashboard"
             element={
@@ -97,7 +95,6 @@ function App() {
             }
           />
 
-          {/* Add the Enrollment Form Route */}
           <Route
             path="/enroll/:gymId"
             element={
@@ -115,7 +112,6 @@ function App() {
             }
           />
 
-          {/* Redirect all other routes to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

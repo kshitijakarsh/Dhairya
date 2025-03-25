@@ -50,7 +50,7 @@ const EnrollmentForm = () => {
       
       const today = new Date();
       const endDate = new Date(today);
-      switch(selectedPlan) {
+      switch(selectedPlan.type) {
         case 'Monthly': endDate.setMonth(endDate.getMonth() + 1); break;
         case 'Half Yearly': endDate.setMonth(endDate.getMonth() + 6); break;
         case 'Yearly': endDate.setFullYear(endDate.getFullYear() + 1); break;
@@ -58,9 +58,11 @@ const EnrollmentForm = () => {
 
       const requestData = {
         gymId: gymId,
-        membershipType: selectedPlan.toLowerCase(),
+        membershipType: selectedPlan.backendType,
         endDate: endDate.toISOString().split('T')[0]
       };
+
+      console.log('Sending enrollment request:', requestData);
 
       const response = await axios.post(
         `${API_BASE_URL}/memberships/enroll`,
@@ -79,6 +81,7 @@ const EnrollmentForm = () => {
       }
 
     } catch (error) {
+      console.error('Enrollment error:', error.response?.data || error);
       const errorMessage = error.response?.data?.message || 'Enrollment failed';
       toast.error(errorMessage);
       
@@ -110,10 +113,10 @@ const EnrollmentForm = () => {
               {plans.map((plan) => (
                 <button
                   key={plan.type}
-                  onClick={() => setSelectedPlan(plan.type)}
+                  onClick={() => setSelectedPlan(plan)}
                   className={`w-full p-4 text-left rounded-md transition-all
                     ${
-                      selectedPlan === plan.type
+                      selectedPlan?.type === plan.type
                         ? 'bg-gray-100 border-2 border-gray-300'
                         : 'border border-gray-200 hover:border-gray-300'
                     }`}
@@ -124,7 +127,7 @@ const EnrollmentForm = () => {
                       <div className="text-sm text-gray-500 mt-1">{plan.desc}</div>
                     </div>
                     <div className="text-lg font-semibold text-gray-800">
-                      ₹{plan.price}
+                      ₹{plan.price?.toLocaleString()}
                     </div>
                   </div>
                 </button>
@@ -170,7 +173,7 @@ const EnrollmentForm = () => {
                 </div>
               ) : (
                 selectedPlan 
-                  ? `Enroll in ${selectedPlan} Plan` 
+                  ? `Enroll in ${selectedPlan.type} Plan` 
                   : 'Select a Plan'
               )}
             </button>

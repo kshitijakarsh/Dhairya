@@ -1,65 +1,7 @@
-import cloudinary from "../utils/cloudinary.js";
 import Gyms from "../models/GymSchema.js";
 import GymOwner from "../models/OwnerSchema.js";
 import dotenv from "dotenv";
 dotenv.config();
-
-export const registerGym = async (req, res) => {
-  try {
-    const validatedData = req.validatedGym;
-    const { owner, name } = validatedData;
-    
-    const existingOwner = await GymOwner.findOne({user : owner});
-
-    if (!existingOwner) {
-      return res.status(404).json({
-        success: false,
-        message: "Owner not found",
-      });
-    }
-
-    const existingGym = await Gyms.findOne({ name, owner });
-    if (existingGym) {
-      return res.status(409).json({
-        success: false,
-        message: "You already have a gym registered with this name",
-      });
-    }
-
-    let imageUrls = [];
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        const uploadedImage = await cloudinary.uploader.upload(file.path, {
-          folder: "gym_images",
-        });
-        imageUrls.push(uploadedImage.secure_url);
-      }
-    }
-
-    const gym = new Gyms({
-      ...validatedData,
-      images: imageUrls,
-    });
-
-    await gym.save();
-
-    existingOwner.gyms.push(gym._id);
-    await existingOwner.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Gym registered successfully",
-      data: gym,
-    });
-  } catch (error) {
-    console.error("🔥 Error registering gym:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error registering gym",
-      error: error.message,
-    });
-  }
-};
 
 export const getGymById = async (req, res) => {
   try {
@@ -89,47 +31,6 @@ export const getGymById = async (req, res) => {
   }
 };
 
-export const getMyGyms = async (req, res) => {
-  try {
-    const gyms = await Gyms.find({ owner: req.user._id })
-      .select("-ratings")
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      data: gyms,
-    });
-  } catch (error) {
-    handleError(res, error, "Error fetching your gyms");
-  }
-};
-
-export const updateGym = async (req, res) => {
-  try {
-    const validatedData = req.validatedGym;
-
-    const gym = await Gyms.findOneAndUpdate(
-      { _id: req.params.id, owner: req.user._id },
-      validatedData,
-      { new: true, runValidators: true }
-    );
-
-    if (!gym) {
-      return res.status(404).json({
-        success: false,
-        message: "Gym not found or you don't have permission to update it",
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Gym updated successfully",
-      data: gym,
-    });
-  } catch (error) {
-    handleError(res, error, "Error updating gym");
-  }
-};
 
 export const addRating = async (req, res) => {
   try {
@@ -239,35 +140,9 @@ export const searchGyms = async (req, res) => {
   }
 };
 
-export const deleteGym = async (req, res) => {
-  try {
-    const gym = await Gyms.findOneAndDelete({
-      _id: req.params.id,
-      owner: req.user._id,
-    });
-
-    if (!gym) {
-      return res.status(404).json({
-        success: false,
-        message: "Gym not found or you don't have permission to delete it",
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Gym deleted successfully",
-    });
-  } catch (error) {
-    handleError(res, error, "Error deleting gym");
-  }
-};
 
 export default {
-  registerGym,
   getGymById,
-  getMyGyms,
-  updateGym,
   addRating,
-  searchGyms,
-  deleteGym,
+  searchGyms
 };

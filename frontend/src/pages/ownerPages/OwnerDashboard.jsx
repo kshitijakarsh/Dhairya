@@ -12,13 +12,13 @@ import {
   Legend,
   Filler,
 } from "chart.js";
-import { Line, Bar, Pie } from "react-chartjs-2";
+import { Line, Pie } from "react-chartjs-2";
 import { useAuth } from "../../contexts/AuthContext";
 import { API_BASE_URL, STORAGE_KEYS } from "../../constants";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useNavigate } from 'react-router-dom';
-import { FaMapMarkerAlt, FaClock, FaDumbbell, FaPhone, FaRupeeSign } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaClock, FaRupeeSign } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import GymMembers from './GymMembers';
 
@@ -39,7 +39,7 @@ ChartJS.register(
 const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage }) => {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: "📊" },
-    { id: "members", label: "Members ", icon: "👥" },
+    { id: "members", label: "Members", icon: "👥" },
     { id: "trainers", label: "Trainers & Staff", icon: "🏋️" },
     { id: "revenue", label: "Revenue & Billing", icon: "💰" },
     { id: "analytics", label: "Gyms", icon: "🏋️" },
@@ -47,38 +47,18 @@ const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage }) => {
   ];
 
   return (
-    <div
-      className={`bg-black text-white h-screen transition-all duration-300 
-                    ${collapsed ? "w-20" : "w-64"} fixed left-0 top-0`}
-    >
+    <div className={`bg-black text-white h-screen transition-all duration-300 ${collapsed ? "w-20" : "w-64"} fixed left-0 top-0`}>
       <div className="p-6 flex justify-between items-center border-b border-white/10">
-        <h2 className={`font-bold text-xl ${collapsed ? "hidden" : "block"}`}>
-          Dhairya
-        </h2>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="text-white/70 hover:text-white p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
-        >
+        <h2 className={`font-bold text-xl ${collapsed ? "hidden" : "block"}`}>Dhairya</h2>
+        <button onClick={() => setCollapsed(!collapsed)} className="text-white/70 hover:text-white p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all">
           {collapsed ? "→" : "←"}
         </button>
       </div>
-
       <nav className="mt-6 px-3">
         {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActivePage(item.id)}
-            className={`w-full p-4 flex items-center gap-3 rounded-xl transition-all mb-2
-                      ${
-                        activePage === item.id
-                          ? "bg-white/10 text-white"
-                          : "text-white/70 hover:bg-white/5 hover:text-white"
-                      }`}
-          >
+          <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full p-4 flex items-center gap-3 rounded-xl transition-all mb-2 ${activePage === item.id ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`}>
             <span className="text-xl">{item.icon}</span>
-            <span className={collapsed ? "hidden" : "block text-sm"}>
-              {item.label}
-            </span>
+            <span className={collapsed ? "hidden" : "block text-sm"}>{item.label}</span>
           </button>
         ))}
       </nav>
@@ -92,9 +72,7 @@ const MetricCard = ({ title, value, icon, trend }) => (
     <div className="flex items-center justify-between mb-4">
       <span className="text-gray-500">{icon}</span>
       {trend && (
-        <span
-          className={`text-sm ${trend > 0 ? "text-green-500" : "text-red-500"}`}
-        >
+        <span className={`text-sm ${trend > 0 ? "text-green-500" : "text-red-500"}`}>
           {trend > 0 ? "↑" : "↓"} {Math.abs(trend)}%
         </span>
       )}
@@ -259,7 +237,6 @@ const GymList = () => {
                         </span>
                       </div>
                       <div className="flex items-center text-gray-600">
-                        <FaPhone className="mr-2 flex-shrink-0" />
                         <span className="text-sm">{gym.phone}</span>
                       </div>
                     </div>
@@ -267,14 +244,10 @@ const GymList = () => {
                     {/* Membership Plans */}
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                        <FaRupeeSign className="mr-2" />
-                        Plans
+                        <span className="text-sm text-gray-600">Half Yearly</span>
+                        <span className="text-sm font-medium">₹{gym.membership_charges?.half_yearly?.toLocaleString()}</span>
                       </h4>
                       <div className="space-y-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Half Yearly</span>
-                          <span className="text-sm font-medium">₹{gym.membership_charges?.half_yearly?.toLocaleString()}</span>
-                        </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Yearly</span>
                           <span className="text-sm font-medium">₹{gym.membership_charges?.yearly?.toLocaleString()}</span>
@@ -285,22 +258,8 @@ const GymList = () => {
                     {/* Operation Hours */}
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                        <FaClock className="mr-2" />
-                        Hours
+                        <span className="text-sm text-gray-600">{formatOperationHours(gym.operation_hours)}</span>
                       </h4>
-                      <div className="space-y-1">
-                        {gym.operation_hours?.slice(0, 3).map((hour, index) => (
-                          <div key={index} className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">{hour.day}</span>
-                            <span className="text-sm">{hour.open} - {hour.close}</span>
-                          </div>
-                        ))}
-                        {gym.operation_hours?.length > 3 && (
-                          <div className="text-sm text-gray-500 italic">
-                            +{gym.operation_hours.length - 3} more days
-                          </div>
-                        )}
-                      </div>
                     </div>
                   </div>
 
@@ -341,7 +300,6 @@ const GymList = () => {
   );
 };
 
-// Mock Data Constants
 const MOCK_CHART_DATA = {
   memberGrowth: {
     labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
@@ -382,52 +340,6 @@ const MOCK_CHART_DATA = {
     ],
   },
 };
-
-const MOCK_ACTIVITIES = [
-  {
-    icon: "👋",
-    title: "New member John Doe enrolled",
-    time: "5 minutes ago",
-  },
-  {
-    icon: "💰",
-    title: "Payment received from Sarah Smith",
-    time: "15 minutes ago",
-  },
-  {
-    icon: "🎯",
-    title: "Monthly target achieved",
-    time: "1 hour ago",
-  },
-  {
-    icon: "📊",
-    title: "Weekly report generated",
-    time: "2 hours ago",
-  },
-  {
-    icon: "🏋️",
-    title: "New trainer Michael joined",
-    time: "3 hours ago",
-  },
-];
-
-const MOCK_INSIGHTS = [
-  {
-    message:
-      "Member attendance is 25% higher on Mondays. Consider adding more morning classes.",
-    category: "Attendance Insight",
-  },
-  {
-    message:
-      "Revenue has increased by 15% compared to last month due to new membership plans.",
-    category: "Revenue Insight",
-  },
-  {
-    message:
-      "Peak hours are shifting earlier. Consider adjusting trainer schedules.",
-    category: "Operations Insight",
-  },
-];
 
 // Chart Options
 const chartOptions = {
@@ -472,21 +384,17 @@ const GymOwnerDashboard = () => {
     },
     memberGrowth: {
       labels: [],
-      datasets: [
-        {
-          label: "Total Members",
-          data: [],
-          borderColor: "rgb(0, 0, 0)",
-          backgroundColor: "rgba(0, 0, 0, 0.1)",
-          tension: 0.4,
-          fill: true,
-        },
-      ],
+      datasets: [{
+        label: "Total Members",
+        data: [],
+        borderColor: "rgb(0, 0, 0)",
+        backgroundColor: "rgba(0, 0, 0, 0.1)",
+        tension: 0.4,
+        fill: true,
+      }],
     },
-    peakHours: MOCK_CHART_DATA.peakHours,
-    membershipDistribution: MOCK_CHART_DATA.membershipDistribution,
-    activities: MOCK_ACTIVITIES,
-    insights: MOCK_INSIGHTS,
+    peakHours: [],
+    membershipDistribution: [],
     gymDetails: [],
     membershipBreakdown: {
       monthly: 0,
@@ -505,24 +413,10 @@ const GymOwnerDashboard = () => {
         });
 
         if (response.data.success) {
-          const {
-            totalMembers,
-            totalRevenue,
-            totalGyms,
-            gyms,
-            membershipBreakdown,
-            monthlyMemberships,
-          } = response.data;
-
-          console.log("Dashboard Data:", response.data);
+          const { totalMembers, totalRevenue, totalGyms, gyms, membershipBreakdown, monthlyMemberships } = response.data;
 
           // Process monthly data
-          // Sort months chronologically
-          const sortedMonths = Object.keys(monthlyMemberships).sort((a, b) => {
-            return new Date(a) - new Date(b);
-          });
-
-          // Get member counts for each month
+          const sortedMonths = Object.keys(monthlyMemberships).sort((a, b) => new Date(a) - new Date(b));
           const monthlyData = sortedMonths.map((month) => ({
             month,
             count: monthlyMemberships[month].length,
@@ -531,33 +425,22 @@ const GymOwnerDashboard = () => {
           setDashboardData((prev) => ({
             ...prev,
             metrics: {
-              ...prev.metrics,
               activeMembers: totalMembers,
               monthlyRevenue: totalRevenue,
               totalGyms,
             },
             gymDetails: gyms,
-            membershipBreakdown: membershipBreakdown || {
-              monthly: 0,
-              half_yearly: 0,
-              yearly: 0,
-            },
+            membershipBreakdown,
             memberGrowth: {
               labels: monthlyData.map((data) => data.month),
-              datasets: [
-                {
-                  label: "Total Members",
-                  data: monthlyData.map((data) => data.count),
-                  borderColor: "rgb(0, 0, 0)",
-                  backgroundColor: "rgba(0, 0, 0, 0.1)",
-                  tension: 0.4,
-                  fill: true,
-                  pointRadius: 6,
-                  pointBackgroundColor: "rgb(0, 0, 0)",
-                  pointBorderColor: "white",
-                  pointBorderWidth: 2,
-                },
-              ],
+              datasets: [{
+                label: "Total Members",
+                data: monthlyData.map((data) => data.count),
+                borderColor: "rgb(0, 0, 0)",
+                backgroundColor: "rgba(0, 0, 0, 0.1)",
+                tension: 0.4,
+                fill: true,
+              }],
             },
           }));
         }
@@ -577,10 +460,7 @@ const GymOwnerDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
       </div>
     );
   }
@@ -594,11 +474,7 @@ const GymOwnerDashboard = () => {
         setActivePage={setActivePage}
       />
 
-      <main
-        className={`transition-all duration-300 ${
-          collapsed ? "ml-20" : "ml-64"
-        } p-8`}
-      >
+      <main className={`transition-all duration-300 ${collapsed ? "ml-20" : "ml-64"} p-8`}>
         {activePage === "dashboard" && (
           <div className="space-y-6">
             {/* Welcome Section */}
@@ -606,11 +482,7 @@ const GymOwnerDashboard = () => {
               <div className="flex items-center gap-6">
                 <div className="h-20 w-20 rounded-full bg-white/10 overflow-hidden flex items-center justify-center">
                   {user?.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt={user.name}
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={user.profileImage} alt={user.name} className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center text-3xl text-white">
                       {user?.name?.charAt(0)}
@@ -618,53 +490,17 @@ const GymOwnerDashboard = () => {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-white">
-                    Welcome back, {user?.name}
-                  </h1>
-                  <p className="mt-2 text-gray-400">
-                    Here's what's happening across your gyms today
-                  </p>
+                  <h1 className="text-3xl font-bold text-white">Welcome back, {user?.name}</h1>
+                  <p className="mt-2 text-gray-400">Here's what's happening across your gyms today</p>
                 </div>
               </div>
             </div>
 
             {/* Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-3xl">👥</span>
-                  <span className="text-sm px-4 py-1.5 rounded-full bg-black/5 font-medium">
-                    Active Members
-                  </span>
-                </div>
-                <h3 className="text-3xl font-bold text-black mt-2">
-                  {dashboardData.metrics.activeMembers.toLocaleString()}
-                </h3>
-              </div>
-
-              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-3xl">💰</span>
-                  <span className="text-sm px-4 py-1.5 rounded-full bg-black/5 font-medium">
-                    Monthly Revenue
-                  </span>
-                </div>
-                <h3 className="text-3xl font-bold text-black mt-2">
-                  ₹{dashboardData.metrics.monthlyRevenue.toLocaleString()}
-                </h3>
-              </div>
-
-              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-3xl">🏋️</span>
-                  <span className="text-sm px-4 py-1.5 rounded-full bg-black/5 font-medium">
-                    Total Gyms
-                  </span>
-                </div>
-                <h3 className="text-3xl font-bold text-black mt-2">
-                  {dashboardData.metrics.totalGyms.toLocaleString()}
-                </h3>
-              </div>
+              <MetricCard title="Active Members" value={dashboardData.metrics.activeMembers.toLocaleString()} icon="👥" />
+              <MetricCard title="Monthly Revenue" value={`₹${dashboardData.metrics.monthlyRevenue.toLocaleString()}`} icon="💰" />
+              <MetricCard title="Total Gyms" value={dashboardData.metrics.totalGyms.toLocaleString()} icon="🏋️" />
             </div>
 
             {/* Charts Section */}
@@ -674,67 +510,30 @@ const GymOwnerDashboard = () => {
                 <h3 className="text-xl font-semibold mb-6">Member Growth</h3>
                 <div className="h-[400px]">
                   <Line
-                    key="memberGrowth"
                     data={dashboardData.memberGrowth}
                     options={{
-                      ...chartOptions,
+                      responsive: true,
+                      maintainAspectRatio: false,
                       plugins: {
-                        ...chartOptions.plugins,
-                        legend: {
-                          display: false,
-                        },
+                        legend: { display: false },
                         tooltip: {
                           backgroundColor: "rgba(0, 0, 0, 0.8)",
                           padding: 12,
-                          titleFont: {
-                            size: 14,
-                            weight: "600",
-                          },
-                          bodyFont: {
-                            size: 13,
-                          },
                           callbacks: {
-                            title: (tooltipItems) => {
-                              return tooltipItems[0].label;
-                            },
-                            label: (context) => {
-                              return `New Members: ${context.raw.toLocaleString()}`;
-                            },
+                            title: (tooltipItems) => tooltipItems[0].label,
+                            label: (context) => `New Members: ${context.raw.toLocaleString()}`,
                           },
                         },
                       },
                       scales: {
                         y: {
                           beginAtZero: true,
-                          grid: {
-                            color: "rgba(0, 0, 0, 0.05)",
-                          },
+                          grid: { color: "rgba(0, 0, 0, 0.05)" },
                           ticks: {
-                            font: {
-                              weight: "500",
-                            },
                             callback: (value) => value.toLocaleString(),
                           },
-                          title: {
-                            display: true,
-                            text: "Number of New Members",
-                            font: {
-                              weight: "500",
-                            },
-                          },
                         },
-                        x: {
-                          grid: {
-                            display: false,
-                          },
-                          ticks: {
-                            font: {
-                              weight: "500",
-                            },
-                            maxRotation: 45,
-                            minRotation: 45,
-                          },
-                        },
+                        x: { grid: { display: false } },
                       },
                     }}
                   />
@@ -743,30 +542,21 @@ const GymOwnerDashboard = () => {
 
               {/* Membership Distribution Chart */}
               <div className="bg-white rounded-2xl shadow-sm p-8">
-                <h3 className="text-xl font-semibold mb-6">
-                  Membership Distribution
-                </h3>
+                <h3 className="text-xl font-semibold mb-6">Membership Distribution</h3>
                 <div className="h-[400px] flex items-center justify-center">
                   <Pie
-                    key="membershipDistribution"
                     data={{
                       labels: ["Monthly", "Half Yearly", "Yearly"],
-                      datasets: [
-                        {
-                          data: [
-                            dashboardData.membershipBreakdown.monthly,
-                            dashboardData.membershipBreakdown.half_yearly,
-                            dashboardData.membershipBreakdown.yearly,
-                          ],
-                          backgroundColor: [
-                            "rgba(0, 0, 0, 0.8)",
-                            "rgba(0, 0, 0, 0.5)",
-                            "rgba(0, 0, 0, 0.3)",
-                          ],
-                          borderColor: "white",
-                          borderWidth: 2,
-                        },
-                      ],
+                      datasets: [{
+                        data: [
+                          dashboardData.membershipBreakdown.monthly,
+                          dashboardData.membershipBreakdown.half_yearly,
+                          dashboardData.membershipBreakdown.yearly,
+                        ],
+                        backgroundColor: ["rgba(0, 0, 0, 0.8)", "rgba(0, 0, 0, 0.5)", "rgba(0, 0, 0, 0.3)"],
+                        borderColor: "white",
+                        borderWidth: 2,
+                      }],
                     }}
                     options={{
                       responsive: true,
@@ -774,42 +564,14 @@ const GymOwnerDashboard = () => {
                       plugins: {
                         legend: {
                           position: "bottom",
-                          labels: {
-                            font: {
-                              weight: "500",
-                            },
-                            padding: 20,
-                            generateLabels: (chart) => {
-                              const datasets = chart.data.datasets[0];
-                              const total = datasets.data.reduce(
-                                (a, b) => a + b,
-                                0
-                              );
-
-                              return chart.data.labels.map((label, i) => ({
-                                text: `${label}: ${datasets.data[i]} (${(
-                                  (datasets.data[i] / total) *
-                                  100
-                                ).toFixed(1)}%)`,
-                                fillStyle: datasets.backgroundColor[i],
-                                hidden: false,
-                                index: i,
-                              }));
-                            },
-                          },
+                          labels: { font: { weight: "500" }, padding: 20 },
                         },
                         tooltip: {
                           callbacks: {
                             label: (context) => {
-                              const total = context.dataset.data.reduce(
-                                (a, b) => a + b,
-                                0
-                              );
+                              const total = context.dataset.data.reduce((a, b) => a + b, 0);
                               const value = context.raw;
-                              const percentage = (
-                                (value / total) *
-                                100
-                              ).toFixed(1);
+                              const percentage = ((value / total) * 100).toFixed(1);
                               return `${context.label}: ${value} members (${percentage}%)`;
                             },
                           },

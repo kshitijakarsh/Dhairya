@@ -15,18 +15,7 @@ const GymMembers = () => {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
     const day = date.getDate();
     const month = months[date.getMonth()];
@@ -39,7 +28,6 @@ const GymMembers = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-
         const response = await axios.get(`${API_BASE_URL}/owner/members`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -48,7 +36,7 @@ const GymMembers = () => {
           setGymMembers(response.data.gymMembers);
           setMonthlyMemberships(response.data.monthlyMemberships);
           // Set the most recent month as selected by default
-          const months = Object.keys(response.data.monthlyMemberships);
+          const months = Object.keys(response.data.monthlyMemberships || {});
           if (months.length > 0) {
             setSelectedMonth(months[months.length - 1]);
           }
@@ -87,7 +75,7 @@ const GymMembers = () => {
               className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black"
             >
               <option value="">All Months</option>
-              {Object.keys(monthlyMemberships).map((month) => (
+              {monthlyMemberships && Object.keys(monthlyMemberships).map((month) => (
                 <option key={month} value={month}>
                   {month}
                 </option>

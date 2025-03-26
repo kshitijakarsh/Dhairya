@@ -220,71 +220,44 @@ export const deleteGym = async (req, res) => {
 export const getMembersByGym = async (req, res) => {
   try {
     const ownerId = req.user.id;
-    console.log(`📢 Fetching gyms for owner: ${ownerId}`);
 
-    // Fetch gyms owned by the user
-    const gyms = await Gyms.find({ owner: ownerId })
-      .select("name memberships")
-      .lean();
+    const gyms = await Gyms.find({ owner: ownerId }).select("name _id").lean();
 
     if (!gyms.length) {
       return res.status(404).json({ success: false, message: "No gyms found under this owner" });
     }
 
-    // Extract all membership IDs
-    const allMembershipIds = gyms.flatMap(gym => gym.memberships.map(String));
-    if (!allMembershipIds.length) {
-      return res.status(200).json({ success: true, gymMembers: {} });
-    }
+    const gymIds = gyms.map((gym) => gym._id.toString());
 
-    console.log(`📄 Found ${allMembershipIds.length} membership records.`);
-
-    // Fetch all memberships with gymGoer details
-    const memberships = await Memberships.find({ gymGoer: { $in: allMembershipIds } })
-      .select("gymGoer gym membershipType endDate paymentStatus")
+    const memberships = await Memberships.find({ gym: { $in: gymIds } })
+      .select("gym membershipType endDate paymentStatus gymGoer userName userProfileImage")
       .lean();
 
     if (!memberships.length) {
-      return res.status(200).json({ success: true, gymMembers: [] });
+      return res.status(200).json({ success: true, gymMembers: {} });
     }
 
-    // Extract unique user IDs from memberships
-    const uniqueUserIds = [...new Set(memberships.map(m => String(m.gymGoer)))];
+    const gymMembers = {};
+    gyms.forEach((gym) => {
+      gymMembers[gym.name] = memberships
+        .filter((membership) => membership.gym.toString() === gym._id.toString())
+        .map((membership) => ({
+          membershipId: membership._id.toString(),
+          membershipType: membership.membershipType,
+          endDate: membership.endDate,
+          paymentStatus: membership.paymentStatus,
+          name: membership.userName || "Unknown",
+          profilePicture: membership.userProfileImage || "default-profile.png",
+        }));
+    });
 
-    console.log(`🆔 Unique GymGoer IDs: ${uniqueUserIds.length}`);
-
-    // Fetch user details in a single query
-    const users = await Users.find({ _id: { $in: uniqueUserIds } })
-      .select("name profileImage")
-      .lean();
-
-    console.log(users);
-    
-
-    // Create a lookup map for users
-    const userLookup = Object.fromEntries(
-      users.map(user => [user._id.toString(), { name: user.name, profilePicture: user.profileImage || "default-profile.png" }])
-    );
-
-    // Map memberships with user details
-    const membershipsWithUserData = memberships.map(membership => ({
-      ...membership,
-      membershipId: membership._id.toString(),
-      gymGoer: membership.gymGoer.toString(),
-      gym: membership.gym.toString(),
-      name: userLookup[membership.gymGoer]?.name || "Unknown",
-      profilePicture: userLookup[membership.gymGoer]?.profilePicture || "default-profile.png",
-    }));
-
-    console.log("✅ Final Membership Data:", membershipsWithUserData);
-
-    return res.status(200).json({ success: true, memberships: membershipsWithUserData });
-
+    return res.status(200).json({ success: true, gymMembers });
   } catch (error) {
     console.error("❌ Error fetching gym members:", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
 
 
 export default {

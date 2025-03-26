@@ -8,88 +8,63 @@ import Gyms from "../models/GymSchema.js";
 export const enrollUserToGym = async (req, res) => {
   try {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Not authenticated"
-      });
+      return res.status(401).json({ success: false, message: "Not authenticated" });
     }
 
-    const user = req.user;
     const { gymId, membershipType, endDate } = req.body;
-
-    const gymGoer = await GymGoer.findOne({ user: user._id });
-    if (!gymGoer) {
-      return res.status(403).json({
-        success: false,
-        message: "Only gym goers can enroll"
-      });
-    }
+    const user = req.user;
 
     if (!gymId || !membershipType || !endDate) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Missing required fields" 
-      });
+      return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    const gym = await Gym.findById(gymId);
+    // Check if user is a GymGoer
+    const gymGoer = await GymGoer.findOne({ user: user._id });
+    if (!gymGoer) {
+      return res.status(403).json({ success: false, message: "Only gym goers can enroll" });
+    }
+
+    // Check if gym exists
+    const gym = await Gyms.findById(gymId);
     if (!gym) {
-      return res.status(404).json({ message: "Gym not found" });
+      return res.status(404).json({ success: false, message: "Gym not found" });
     }
 
-    const existingMembership = await Membership.findOne({ 
-      gymGoer: gymGoer._id, 
-      gym: gymId,
-      status: "Active"
-    });
-
+    // Check for active membership
+    const existingMembership = await Membership.findOne({ gymGoer: gymGoer._id, gym: gymId, activeStatus: "Active" });
     if (existingMembership) {
-      return res.status(400).json({ 
-        message: `You already have an active ${existingMembership.membershipType} membership`
-      });
+      return res.status(400).json({ success: false, message: `You already have an active ${existingMembership.membershipType} membership` });
     }
 
-    const newMembership = new Membership({
+    // Create and Save New Membership
+    const newMembership = await Membership.create({
       gymGoer: gymGoer._id,
       gym: gymId,
       membershipType: membershipType.toLowerCase(),
-      endDate: new Date(endDate)
+      endDate: new Date(endDate),
+      activeStatus: "Active", // Ensuring active status
+      userName: user.name,
+      userProfileImage: user.profileImage || "default-profile.png",
     });
 
-    await newMembership.save();
+    // Update GymGoer's enrolled memberships
+    await GymGoer.findByIdAndUpdate(gymGoer._id, { $push: { enrolledMemberships: newMembership._id } });
 
-    await GymGoer.findByIdAndUpdate(gymGoer._id, {
-      $push: { enrolledMemberships: newMembership._id }
-    });
-
+    // Update User Dashboard (if applicable)
     await UserDashboard.findOneAndUpdate(
       { userId: user._id },
-      { 
-        $set: { 
-          "userDetails.gymEnrolled": true,
-          "userDetails.gymName": gym.name
-        } 
-      }
+      { $set: { "userDetails.gymEnrolled": true, "userDetails.gymName": gym.name } },
+      { upsert: true } // Ensures dashboard entry exists
     );
 
-    await Gyms.findByIdAndUpdate(gymId, {
-      $push: {
-        memberships: gymGoer._id
-      }
-    });
+    // Update Gym with new membership
+    await Gyms.findByIdAndUpdate(gymId, { $push: { memberships: newMembership._id } });
 
-    res.status(201).json({
-      success: true,
-      message: "Enrollment successful!",
-      membership: newMembership
-    });
+    res.status(201).json({ success: true, message: "Enrollment successful!", membership: newMembership });
 
   } catch (error) {
-    console.error("Enrollment error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Enrollment failed"
-    });
+    console.error("❌ Enrollment error:", error);
+    res.status(500).json({ success: false, message: "Enrollment failed", error: error.message });
   }
 };
 

@@ -20,6 +20,7 @@ import axios from "axios";
 import { useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaClock, FaDumbbell, FaPhone, FaRupeeSign } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import GymMembers from './GymMembers';
 
 // Register ChartJS components
 ChartJS.register(
@@ -823,7 +824,7 @@ const GymOwnerDashboard = () => {
         )}
 
         {/* Other Pages */}
-        {activePage === "members" && <div>Members & Subscriptions Content</div>}
+        {activePage === "members" && <GymMembers />}
         {activePage === "trainers" && <div>Trainers & Staff Content</div>}
         {activePage === "revenue" && <div>Revenue & Billing Content</div>}
         {activePage === "analytics" && <GymList />}

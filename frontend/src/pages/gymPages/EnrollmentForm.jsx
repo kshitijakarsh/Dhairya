@@ -58,7 +58,7 @@ const EnrollmentForm = () => {
 
       const requestData = {
         gymId: gymId,
-        membershipType: selectedPlan.backendType,
+        membershipType: selectedPlan.type.toLowerCase().replace(' ', '_'),
         endDate: endDate.toISOString().split('T')[0]
       };
 
@@ -77,7 +77,11 @@ const EnrollmentForm = () => {
 
       if (response.data.success) {
         toast.success('Successfully enrolled!');
-        navigate(`/user/dashboard`);
+        if (response.data.membershipId) {
+          navigate(`/invoice/${response.data.membershipId}`);
+        } else {
+          navigate('/user/dashboard');
+        }
       }
 
     } catch (error) {

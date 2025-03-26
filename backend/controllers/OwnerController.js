@@ -1,6 +1,8 @@
 import GymOwner from "../models/OwnerSchema.js";
 import Gyms from "../models/GymSchema.js";
 import Memberships from "../models/MembershipSchema.js";
+import Users from "../models/UserSchema.js";
+import mongoose from "mongoose";
 
 export const registerGym = async (req, res) => {
   try {
@@ -150,13 +152,11 @@ export const getGymStats = async (req, res) => {
 };
 
 export const getMyGyms = async (req, res) => {
-  
   try {
     const gyms = await Gyms.find({ owner: req.user._id })
       .select("-ratings")
       .sort({ createdAt: -1 });
     console.log(gyms);
-    
 
     res.json({
       success: true,
@@ -218,8 +218,74 @@ export const deleteGym = async (req, res) => {
 };
 
 export const getMembersByGym = async (req, res) => {
-  
-}
+  try {
+    const ownerId = req.user.id;
+    console.log(`📢 Fetching gyms for owner: ${ownerId}`);
+
+    // Fetch gyms owned by the user
+    const gyms = await Gyms.find({ owner: ownerId })
+      .select("name memberships")
+      .lean();
+
+    if (!gyms.length) {
+      return res.status(404).json({ success: false, message: "No gyms found under this owner" });
+    }
+
+    // Extract all membership IDs
+    const allMembershipIds = gyms.flatMap(gym => gym.memberships.map(String));
+    if (!allMembershipIds.length) {
+      return res.status(200).json({ success: true, gymMembers: {} });
+    }
+
+    console.log(`📄 Found ${allMembershipIds.length} membership records.`);
+
+    // Fetch all memberships with gymGoer details
+    const memberships = await Memberships.find({ gymGoer: { $in: allMembershipIds } })
+      .select("gymGoer gym membershipType endDate paymentStatus")
+      .lean();
+
+    if (!memberships.length) {
+      return res.status(200).json({ success: true, gymMembers: [] });
+    }
+
+    // Extract unique user IDs from memberships
+    const uniqueUserIds = [...new Set(memberships.map(m => String(m.gymGoer)))];
+
+    console.log(`🆔 Unique GymGoer IDs: ${uniqueUserIds.length}`);
+
+    // Fetch user details in a single query
+    const users = await Users.find({ _id: { $in: uniqueUserIds } })
+      .select("name profileImage")
+      .lean();
+
+    console.log(users);
+    
+
+    // Create a lookup map for users
+    const userLookup = Object.fromEntries(
+      users.map(user => [user._id.toString(), { name: user.name, profilePicture: user.profileImage || "default-profile.png" }])
+    );
+
+    // Map memberships with user details
+    const membershipsWithUserData = memberships.map(membership => ({
+      ...membership,
+      membershipId: membership._id.toString(),
+      gymGoer: membership.gymGoer.toString(),
+      gym: membership.gym.toString(),
+      name: userLookup[membership.gymGoer]?.name || "Unknown",
+      profilePicture: userLookup[membership.gymGoer]?.profilePicture || "default-profile.png",
+    }));
+
+    console.log("✅ Final Membership Data:", membershipsWithUserData);
+
+    return res.status(200).json({ success: true, memberships: membershipsWithUserData });
+
+  } catch (error) {
+    console.error("❌ Error fetching gym members:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 
 export default {
   registerGym,
@@ -227,4 +293,5 @@ export default {
   getMyGyms,
   updateGym,
   deleteGym,
+  getMembersByGym,
 };

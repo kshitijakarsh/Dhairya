@@ -1,5 +1,5 @@
 // API URLs
-export const API_BASE_URL = "http://localhost:3000/api";
+export const API_BASE_URL = "https://dhairya-9pat.onrender.com/api";
 
 // Routes
 export const ROUTES = {

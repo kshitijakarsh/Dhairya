@@ -62,8 +62,6 @@ const EnrollmentForm = () => {
         endDate: endDate.toISOString().split('T')[0]
       };
 
-      console.log('Sending enrollment request:', requestData);
-
       const response = await axios.post(
         `${API_BASE_URL}/memberships/enroll`,
         requestData,

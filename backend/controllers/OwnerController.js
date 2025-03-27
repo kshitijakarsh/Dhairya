@@ -3,6 +3,7 @@ import Gyms from "../models/GymSchema.js";
 import Memberships from "../models/MembershipSchema.js";
 import Users from "../models/UserSchema.js";
 import mongoose from "mongoose";
+import cloudinary from "../utils/cloudinary.js";
 
 export const registerGym = async (req, res) => {
   try {
@@ -156,7 +157,6 @@ export const getMyGyms = async (req, res) => {
     const gyms = await Gyms.find({ owner: req.user._id })
       .select("-ratings")
       .sort({ createdAt: -1 });
-    console.log(gyms);
 
     res.json({
       success: true,
@@ -230,7 +230,7 @@ export const getMembersByGym = async (req, res) => {
     const gymIds = gyms.map((gym) => gym._id.toString());
 
     const memberships = await Memberships.find({ gym: { $in: gymIds } })
-      .select("gym membershipType endDate paymentStatus gymGoer userName userProfileImage")
+      .select("gym membershipType startDate endDate paymentStatus gymGoer userName userProfileImage")
       .lean();
 
     if (!memberships.length) {
@@ -244,6 +244,7 @@ export const getMembersByGym = async (req, res) => {
         .map((membership) => ({
           membershipId: membership._id.toString(),
           membershipType: membership.membershipType,
+          startDate: membership.startDate,
           endDate: membership.endDate,
           paymentStatus: membership.paymentStatus,
           name: membership.userName || "Unknown",

@@ -110,8 +110,6 @@ const UserProfileForm = () => {
         weight: parseFloat(formData.currentWeight),
         date: new Date().toISOString()
       };
-
-      console.log(formData);
       
 
       const response = await axios.post(

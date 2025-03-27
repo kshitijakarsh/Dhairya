@@ -671,8 +671,6 @@ const UserDashboard = () => {
   const { age, gender, fitnessGoals, programs } = dashboard.profile;
   const { gymEnrolled, gymName } = dashboard.userDetails;
 
-  console.log("Profile Image URL:", user?.profileImage);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
       <div className="max-w-7xl mx-auto space-y-8">

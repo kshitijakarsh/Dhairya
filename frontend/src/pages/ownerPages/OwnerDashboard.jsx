@@ -17,10 +17,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { API_BASE_URL, STORAGE_KEYS } from "../../constants";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { useNavigate } from 'react-router-dom';
-import { FaMapMarkerAlt, FaClock, FaRupeeSign } from 'react-icons/fa';
-import { motion } from 'framer-motion';
-import GymMembers from './GymMembers';
+import { useNavigate } from "react-router-dom";
+import { FaMapMarkerAlt, FaClock, FaRupeeSign } from "react-icons/fa";
+import { motion } from "framer-motion";
+import GymMembers from "./GymMembers";
 
 // Register ChartJS components
 ChartJS.register(
@@ -40,25 +40,41 @@ const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage }) => {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: "📊" },
     { id: "members", label: "Members", icon: "👥" },
-    { id: "trainers", label: "Trainers & Staff", icon: "🏋️" },
-    { id: "revenue", label: "Revenue & Billing", icon: "💰" },
     { id: "analytics", label: "Gyms", icon: "🏋️" },
-    { id: "settings", label: "Settings", icon: "⚙️" },
   ];
 
   return (
-    <div className={`bg-black text-white h-screen transition-all duration-300 ${collapsed ? "w-20" : "w-64"} fixed left-0 top-0`}>
-      <div className="p-6 flex justify-between items-center border-b border-white/10">
-        <h2 className={`font-bold text-xl ${collapsed ? "hidden" : "block"}`}>Dhairya</h2>
-        <button onClick={() => setCollapsed(!collapsed)} className="text-white/70 hover:text-white p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all">
+    <div
+      className={`bg-white text-black h-screen transition-all duration-300 ${
+        collapsed ? "w-20" : "w-64"
+      } fixed left-0 top-0 border-r-2 border-slate-900`}
+    >
+      <div className="p-6 flex justify-between items-center border-b border-gray-300">
+        <h2 className={`font-bold text-xl ${collapsed ? "hidden" : "block"}`}>
+          Dhairya
+        </h2>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-black/70 hover:text-black p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+        >
           {collapsed ? "→" : "←"}
         </button>
       </div>
       <nav className="mt-6 px-3">
         {navItems.map((item) => (
-          <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full p-4 flex items-center gap-3 rounded-xl transition-all mb-2 ${activePage === item.id ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`}>
+          <button
+            key={item.id}
+            onClick={() => setActivePage(item.id)}
+            className={`w-full p-4 flex items-center gap-3 rounded-xl transition-all mb-2 ${
+              activePage === item.id
+                ? "border-2 drop-shadow-md border-black text-black bg-gray-100"
+                : "text-black/70 hover:bg-gray-100"
+            }`}
+          >
             <span className="text-xl">{item.icon}</span>
-            <span className={collapsed ? "hidden" : "block text-sm"}>{item.label}</span>
+            <span className={collapsed ? "hidden" : "block text-sm"}>
+              {item.label}
+            </span>
           </button>
         ))}
       </nav>
@@ -72,7 +88,9 @@ const MetricCard = ({ title, value, icon, trend }) => (
     <div className="flex items-center justify-between mb-4">
       <span className="text-gray-500">{icon}</span>
       {trend && (
-        <span className={`text-sm ${trend > 0 ? "text-green-500" : "text-red-500"}`}>
+        <span
+          className={`text-sm ${trend > 0 ? "text-green-500" : "text-red-500"}`}
+        >
           {trend > 0 ? "↑" : "↓"} {Math.abs(trend)}%
         </span>
       )}
@@ -135,7 +153,7 @@ const GymList = () => {
   // Format operation hours
   const formatOperationHours = (hours) => {
     if (!hours || !Array.isArray(hours)) return "Hours not available";
-    return hours.map(hour => `${hour.day}: ${hour.open} - ${hour.close}`);
+    return hours.map((hour) => `${hour.day}: ${hour.open} - ${hour.close}`);
   };
 
   useEffect(() => {
@@ -149,7 +167,6 @@ const GymList = () => {
 
         if (response.data.success) {
           setGyms(response.data.data || []);
-          console.log("Fetched gyms:", response.data.data);
         }
       } catch (error) {
         console.error("Failed to fetch gyms:", error);
@@ -175,7 +192,7 @@ const GymList = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">My Gyms</h2>
         <button
-          onClick={() => navigate('/gym-registration')}
+          onClick={() => navigate("/dashboard/gym/register")}
           className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-900 transition-all"
         >
           + Add New Gym
@@ -185,10 +202,12 @@ const GymList = () => {
       {gyms.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-2xl shadow-sm">
           <div className="text-6xl mb-4">🏋️</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Gyms Yet</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            No Gyms Yet
+          </h3>
           <p className="text-gray-600 mb-6">Start by adding your first gym</p>
           <button
-            onClick={() => navigate('/gym-registration')}
+            onClick={() => navigate("/dashboard/gym/register")}
             className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all"
           >
             Register a Gym
@@ -207,21 +226,28 @@ const GymList = () => {
                   {/* Header Section with Stats */}
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-2xl font-semibold text-gray-900 mb-1">{gym.name}</h3>
+                      <h3 className="text-2xl font-semibold text-gray-900 mb-1">
+                        {gym.name}
+                      </h3>
                       <p className="text-gray-600">{gym.description}</p>
                     </div>
                     <div className="flex gap-4">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-black">
-                          {(gym.memberships?.length || 0)}
+                          {gym.memberships?.length || 0}
                         </div>
                         <div className="text-sm text-gray-500">Members</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
-                          ₹{(gym.membership_charges?.monthly || 0).toLocaleString()}
+                          ₹
+                          {(
+                            gym.membership_charges?.monthly || 0
+                          ).toLocaleString()}
                         </div>
-                        <div className="text-sm text-gray-500">Monthly Plan</div>
+                        <div className="text-sm text-gray-500">
+                          Monthly Plan
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -233,7 +259,8 @@ const GymList = () => {
                       <div className="flex items-start text-gray-600">
                         <FaMapMarkerAlt className="mr-2 mt-1 flex-shrink-0" />
                         <span className="text-sm">
-                          {gym.address.street}, {gym.address.city}, {gym.address.state}
+                          {gym.address.street}, {gym.address.city},{" "}
+                          {gym.address.state}
                         </span>
                       </div>
                       <div className="flex items-center text-gray-600">
@@ -244,13 +271,20 @@ const GymList = () => {
                     {/* Membership Plans */}
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                        <span className="text-sm text-gray-600">Half Yearly</span>
-                        <span className="text-sm font-medium">₹{gym.membership_charges?.half_yearly?.toLocaleString()}</span>
+                        <span className="text-sm text-gray-600">
+                          Half Yearly
+                        </span>
+                        <span className="text-sm font-medium">
+                          ₹
+                          {gym.membership_charges?.half_yearly?.toLocaleString()}
+                        </span>
                       </h4>
                       <div className="space-y-1">
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Yearly</span>
-                          <span className="text-sm font-medium">₹{gym.membership_charges?.yearly?.toLocaleString()}</span>
+                          <span className="text-sm font-medium">
+                            ₹{gym.membership_charges?.yearly?.toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -258,7 +292,9 @@ const GymList = () => {
                     {/* Operation Hours */}
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                        <span className="text-sm text-gray-600">{formatOperationHours(gym.operation_hours)}</span>
+                        <span className="text-sm text-gray-600">
+                          {formatOperationHours(gym.operation_hours)}
+                        </span>
                       </h4>
                     </div>
                   </div>
@@ -384,14 +420,16 @@ const GymOwnerDashboard = () => {
     },
     memberGrowth: {
       labels: [],
-      datasets: [{
-        label: "Total Members",
-        data: [],
-        borderColor: "rgb(0, 0, 0)",
-        backgroundColor: "rgba(0, 0, 0, 0.1)",
-        tension: 0.4,
-        fill: true,
-      }],
+      datasets: [
+        {
+          label: "Total Members",
+          data: [],
+          borderColor: "rgb(0, 0, 0)",
+          backgroundColor: "rgba(0, 0, 0, 0.1)",
+          tension: 0.4,
+          fill: true,
+        },
+      ],
     },
     peakHours: [],
     membershipDistribution: [],
@@ -413,10 +451,19 @@ const GymOwnerDashboard = () => {
         });
 
         if (response.data.success) {
-          const { totalMembers, totalRevenue, totalGyms, gyms, membershipBreakdown, monthlyMemberships } = response.data;
+          const {
+            totalMembers,
+            totalRevenue,
+            totalGyms,
+            gyms,
+            membershipBreakdown,
+            monthlyMemberships,
+          } = response.data;
 
           // Process monthly data
-          const sortedMonths = Object.keys(monthlyMemberships).sort((a, b) => new Date(a) - new Date(b));
+          const sortedMonths = Object.keys(monthlyMemberships).sort(
+            (a, b) => new Date(a) - new Date(b)
+          );
           const monthlyData = sortedMonths.map((month) => ({
             month,
             count: monthlyMemberships[month].length,
@@ -433,14 +480,16 @@ const GymOwnerDashboard = () => {
             membershipBreakdown,
             memberGrowth: {
               labels: monthlyData.map((data) => data.month),
-              datasets: [{
-                label: "Total Members",
-                data: monthlyData.map((data) => data.count),
-                borderColor: "rgb(0, 0, 0)",
-                backgroundColor: "rgba(0, 0, 0, 0.1)",
-                tension: 0.4,
-                fill: true,
-              }],
+              datasets: [
+                {
+                  label: "Total Members",
+                  data: monthlyData.map((data) => data.count),
+                  borderColor: "rgb(0, 0, 0)",
+                  backgroundColor: "rgba(0, 0, 0, 0.1)",
+                  tension: 0.4,
+                  fill: true,
+                },
+              ],
             },
           }));
         }
@@ -474,15 +523,22 @@ const GymOwnerDashboard = () => {
         setActivePage={setActivePage}
       />
 
-      <main className={`transition-all duration-300 ${collapsed ? "ml-20" : "ml-64"} p-8`}>
+      <main
+        className={`transition-all duration-300 ${
+          collapsed ? "ml-20" : "ml-64"
+        } p-8`}
+      >
         {activePage === "dashboard" && (
           <div className="space-y-6">
-            {/* Welcome Section */}
             <div className="bg-black rounded-2xl p-8 shadow-lg mb-8">
               <div className="flex items-center gap-6">
                 <div className="h-20 w-20 rounded-full bg-white/10 overflow-hidden flex items-center justify-center">
                   {user?.profileImage ? (
-                    <img src={user.profileImage} alt={user.name} className="h-full w-full object-cover" />
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center text-3xl text-white">
                       {user?.name?.charAt(0)}
@@ -490,17 +546,32 @@ const GymOwnerDashboard = () => {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-white">Welcome back, {user?.name}</h1>
-                  <p className="mt-2 text-gray-400">Here's what's happening across your gyms today</p>
+                  <h1 className="text-3xl font-bold text-white">
+                    Welcome back, {user?.name}
+                  </h1>
+                  <p className="mt-2 text-gray-400">
+                    Here's what's happening across your gyms today
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <MetricCard title="Active Members" value={dashboardData.metrics.activeMembers.toLocaleString()} icon="👥" />
-              <MetricCard title="Monthly Revenue" value={`₹${dashboardData.metrics.monthlyRevenue.toLocaleString()}`} icon="💰" />
-              <MetricCard title="Total Gyms" value={dashboardData.metrics.totalGyms.toLocaleString()} icon="🏋️" />
+              <MetricCard
+                title="Active Members"
+                value={dashboardData.metrics.activeMembers.toLocaleString()}
+                icon="👥"
+              />
+              <MetricCard
+                title="Monthly Revenue"
+                value={`₹${dashboardData.metrics.monthlyRevenue.toLocaleString()}`}
+                icon="💰"
+              />
+              <MetricCard
+                title="Total Gyms"
+                value={dashboardData.metrics.totalGyms.toLocaleString()}
+                icon="🏋️"
+              />
             </div>
 
             {/* Charts Section */}
@@ -521,7 +592,8 @@ const GymOwnerDashboard = () => {
                           padding: 12,
                           callbacks: {
                             title: (tooltipItems) => tooltipItems[0].label,
-                            label: (context) => `New Members: ${context.raw.toLocaleString()}`,
+                            label: (context) =>
+                              `New Members: ${context.raw.toLocaleString()}`,
                           },
                         },
                       },
@@ -542,21 +614,29 @@ const GymOwnerDashboard = () => {
 
               {/* Membership Distribution Chart */}
               <div className="bg-white rounded-2xl shadow-sm p-8">
-                <h3 className="text-xl font-semibold mb-6">Membership Distribution</h3>
+                <h3 className="text-xl font-semibold mb-6">
+                  Membership Distribution
+                </h3>
                 <div className="h-[400px] flex items-center justify-center">
                   <Pie
                     data={{
                       labels: ["Monthly", "Half Yearly", "Yearly"],
-                      datasets: [{
-                        data: [
-                          dashboardData.membershipBreakdown.monthly,
-                          dashboardData.membershipBreakdown.half_yearly,
-                          dashboardData.membershipBreakdown.yearly,
-                        ],
-                        backgroundColor: ["rgba(0, 0, 0, 0.8)", "rgba(0, 0, 0, 0.5)", "rgba(0, 0, 0, 0.3)"],
-                        borderColor: "white",
-                        borderWidth: 2,
-                      }],
+                      datasets: [
+                        {
+                          data: [
+                            dashboardData.membershipBreakdown.monthly,
+                            dashboardData.membershipBreakdown.half_yearly,
+                            dashboardData.membershipBreakdown.yearly,
+                          ],
+                          backgroundColor: [
+                            "rgba(0, 0, 0, 0.8)",
+                            "rgba(0, 0, 0, 0.5)",
+                            "rgba(0, 0, 0, 0.3)",
+                          ],
+                          borderColor: "white",
+                          borderWidth: 2,
+                        },
+                      ],
                     }}
                     options={{
                       responsive: true,
@@ -569,9 +649,15 @@ const GymOwnerDashboard = () => {
                         tooltip: {
                           callbacks: {
                             label: (context) => {
-                              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                              const total = context.dataset.data.reduce(
+                                (a, b) => a + b,
+                                0
+                              );
                               const value = context.raw;
-                              const percentage = ((value / total) * 100).toFixed(1);
+                              const percentage = (
+                                (value / total) *
+                                100
+                              ).toFixed(1);
                               return `${context.label}: ${value} members (${percentage}%)`;
                             },
                           },
@@ -587,10 +673,7 @@ const GymOwnerDashboard = () => {
 
         {/* Other Pages */}
         {activePage === "members" && <GymMembers />}
-        {activePage === "trainers" && <div>Trainers & Staff Content</div>}
-        {activePage === "revenue" && <div>Revenue & Billing Content</div>}
         {activePage === "analytics" && <GymList />}
-        {activePage === "settings" && <div>Settings Content</div>}
       </main>
     </div>
   );

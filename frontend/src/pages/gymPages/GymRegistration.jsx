@@ -238,26 +238,6 @@ const GymRegistration = () => {
         formPayload.append('images', image);
       });
 
-      // Add logging here
-      console.log("📤 Sending registration request with:", {
-        formData: {
-          ...formData,
-          operation_hours: formData.operation_hours,
-          facilities: formData.facilities,
-          membership_charges: formData.membership_charges
-        },
-        images: images.map(img => ({
-          name: img.name,
-          type: img.type,
-          size: img.size
-        }))
-      });
-
-      console.log("📦 FormData contents:");
-      for (let [key, value] of formPayload.entries()) {
-        console.log(`${key}:`, value);
-      }
-
       const response = await axios.post(
         `${API_BASE_URL}/owner/register`,
         formPayload,

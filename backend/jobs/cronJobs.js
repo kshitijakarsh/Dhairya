@@ -6,5 +6,3 @@ cron.schedule("0 0 * * *", updateExpiredMemberships, {
   scheduled: true,
   timezone: "Asia/Kolkata" // Adjust as needed
 });
-
-console.log("✅ Cron job scheduled to update expired memberships at midnight.");

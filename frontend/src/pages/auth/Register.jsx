@@ -110,13 +110,9 @@ const Register = () => {
       if (formData.profilePicture) {
         formPayload.append('profileImage', formData.profilePicture);
       }
-
-      console.log("Data sent : ", formData);
       
 
       const registeredUser = await register(formPayload);
-      
-      console.log("Registration response:", registeredUser);
       
       if (registeredUser.role === 'Goer') {
         navigate('/profile/setup');
